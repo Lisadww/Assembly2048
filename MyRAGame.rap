@@ -1,0 +1,84 @@
+[Project]
+Assembler=masm
+Type=Win32 App
+Description=MyRAGame
+Backup=$P\Bak\
+Group=1
+GroupExpand=1
+Res.rc=1
+[Files]
+1=MyRAGame.Asm
+2=MyRAGame.Inc
+3=MyRAGame.Rc
+4=MyRAGame.dlg
+5=MyRAGame.mnu
+[MakeFiles]
+0=MyRAGame.rap
+1=MyRAGame.rc
+2=MyRAGame.asm
+3=MyRAGame.obj
+4=MyRAGame.res
+5=MyRAGame.exe
+6=MyRAGame.def
+7=MyRAGame.dll
+8=MyRAGame.txt
+9=MyRAGame.lib
+10=MyRAGame.mak
+11=MyRAGame.hla
+12=MyRAGame.com
+[MakeDef]
+Menu=1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0
+1=4,O,$B\RC.EXE /v,1
+2=3,O,$B\ML.EXE /c /coff /Cp /nologo /I"$I",2
+3=5,O,$B\LINK.EXE /SUBSYSTEM:WINDOWS /RELEASE /VERSION:4.0 /LIBPATH:"$L" /OUT:"$5",3,4
+4=0,0,,5
+5=rsrc.obj,O,$B\CVTRES.EXE,rsrc.res
+6=*.obj,O,$B\ML.EXE /c /coff /Cp /nologo /I"$I",*.asm
+7=0,0,"$E\OllyDbg",5
+11=4,O,$B\RC.EXE /v,1
+12=3,O,$B\ML.EXE /c /coff /Cp /Zi /nologo /I"$I",2
+13=5,O,$B\LINK.EXE /SUBSYSTEM:WINDOWS /DEBUG /VERSION:4.0 /LIBPATH:"$L" /OUT:"$5",3,4
+14=0,0,,5
+15=rsrc.obj,O,$B\CVTRES.EXE,rsrc.res
+16=*.obj,O,$B\ML.EXE /c /coff /Cp /nologo /I"$I",*.asm
+17=0,0,"$E\OllyDbg",5
+[Resource]
+1=,100,7,chart_line.png
+2=,101,7,chart_line_grey.png
+3=,102,2,brown_color_block.ico
+4=,110,2,num_basic.ico
+5=,111,2,num_block_2.ico
+6=,112,2,num_block_4.ico
+7=,113,2,num_block_8.ico
+8=,114,2,num_block_16.ico
+9=,115,2,num_block_32.ico
+10=,116,2,num_block_64.ico
+11=,117,2,num_block_128.ico
+12=,118,2,num_block_256.ico
+13=,119,2,num_block_512.ico
+14=,120,2,num_block_1024.ico
+15=,121,2,num_block_2048.ico
+[StringTable]
+[VerInf]
+[Group]
+Group=Assembly,Resources,Misc
+1=2
+2=2
+3=3
+4=3
+5=3
+[AutoLoad]
+AutoLoad=
+[Find]
+1="hWnd"
+2="hBtn1"
+3="MANIFEST"
+4="MANI"
+[RADebugBP]
+3=
+1=
+2=
+[Collapse]
+3=
+[Size]
+3=0,0,0,0,90
