@@ -17,24 +17,25 @@ includelib comdlg32.lib
 includelib masm32.lib
 includelib msvcrt.lib
 
-include ModernUI.inc
-includelib ModernUI.lib
-
-include ModernUI_CaptionBar.inc
-includelib ModernUI_CaptionBar.lib
-
-include ModernUI_Button.inc
-includelib ModernUI_Button.lib
-
-include ModernUI_Text.inc
-includelib ModernUI_Text.lib
 
 ;-----------------------------------------------------------------------------------------
 ; Prototypes
 ;-----------------------------------------------------------------------------------------
 WinMain                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
 WndProc                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
+OnBlockReset            PROTO
+OnDraw					PROTO :HWND,:HDC
+GetOneRandBlock         PROTO
+OnBlockInit				PROTO 
+OnBlockUpdate			PROTO 
+ChangeBlockResource		PROTO :DWORD
+DetermineBlockHandle	PROTO
+OnScoreUpdate			PROTO :HWND
+OnKeydown				PROTO :HWND,:UINT,:WPARAM,:LPARAM
 MessageBoxW			PROTO :DWORD,:DWORD,:DWORD,:DWORD
+
+
+
 
 .CONST
 ;-----------------------------------------------------------------------------------------
@@ -43,8 +44,6 @@ MessageBoxW			PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
 MessageBox 				EQU <MessageBoxW>
 
-PNG_CHART               EQU 100
-PNG_CHART_GREY          EQU 101
 ICO_BROWN_COLOR_BLOCK	EQU 102
 
 NUM_BLOCK_BASIC			EQU 110
@@ -60,6 +59,8 @@ NUM_BLOCK_512			EQU 119
 NUM_BLOCK_1024			EQU 120
 NUM_BLOCK_2048			EQU 121
 
+ICO_LOGO_2048			EQU 200
+
 ; Main Dialog
 IDD_DIALOG              EQU 1000
 IDC_CAPTIONBAR          EQU 1001
@@ -68,23 +69,27 @@ IDC_TEXTRSHEADER        EQU 1003
 
 ; Main Menu 
 IDM_MENU                EQU 10000
-IDM_FILE_EXIT           EQU 10001
+IDM_NEW_GAME          	EQU 10001
+IDM_OPEN	          	EQU 10002
+IDM_SAVE	          	EQU 10003
+IDM_FILE_EXIT           EQU 10010
 IDM_HELP_ABOUT          EQU 10101
+IDM_RANK				EQU 11000
 
 ;-----------------------------------------------------------------------------------------
 ; Game parameters
 ;-----------------------------------------------------------------------------------------
 
-GAME_LINE_x_LEFT      EQU 20d
-GAME_LINE_x_RIGHT     EQU 360d
-GAME_LINE_y_TOP       EQU 220d
-GAME_LINE_y_BUTTOM    EQU 560d
+GAME_LINE_x_LEFT      EQU 20
+GAME_LINE_x_RIGHT     EQU 360
+GAME_LINE_y_TOP       EQU 220
+GAME_LINE_y_BUTTOM    EQU 560
 
-GAME_LINE_ROW_HEIGHT  EQU 85d
-GAME_LINE_COLUMN_WIDTH EQU 85d
+GAME_LINE_ROW_HEIGHT  EQU 85
+GAME_LINE_COLUMN_WIDTH EQU 85
 
-GAME_BOX_HEIGHT       EQU 40d
-GAME_BOX_WIDTH        EQU 85d
+GAME_BOX_HEIGHT       EQU 40
+GAME_BOX_WIDTH        EQU 85
 
 
 .DATA
@@ -94,12 +99,25 @@ GAME_BOX_WIDTH        EQU 85d
 ClassName               DB 'DLGCLASS',0
 AppName                 DB 'MyRAGame',0
 AboutMsg                DB 'Lisa',13,10,'Copyright © fearless 2022',0
+							
 sz_Button_Start_Text    DB 'Start',0
 sz_Text_Score			DB 'Score',0
 sz_Text_Highest			DB 'Highest',0
 ;szNotifyText            DB '23',0
 
-sz_MessageBox_Title		DD 'Me',0
+
+
+
+
+sz_MessageBox_Title		DD 'Me',
+
+sz_Num_to_text			DB '%d',0
+
+text_score				DB 'DF',0
+text_highest_score		DB 'DF',0
+
+num_score				DD 0
+num_highest_score		DD 0
 
 BLOCK  					DD 16 DUP(0)
 
@@ -110,15 +128,13 @@ temp_block_num			DD 0
 ; Uninitialized Data
 ;-----------------------------------------------------------------------------------------
 icc                     INITCOMMONCONTROLSEX <>
-hInstance               DD ?
+hInstance               DD ? 
 CommandLine             DD ?
 hWnd                    DD ?
 hCaptionBar             DD ?
 hLine                  	DD ?
-hBtn1                   DD ?
-hBtn2                   DD ?
-hBtn3                   DD ?
 
+hIconLogo2048 			HICON ?
 hIconBrown 				HICON ?
 hIconNumNull 			HICON ?    
 hIconBlock1	 			HICON ?
@@ -138,25 +154,23 @@ hIconBlock14	 		HICON ?
 hIconBlock15	 		HICON ?
 hIconBlock16	 		HICON ?
 
+hIconTemp				HICON ?
+
+block_width				DD ?
+right_border			DD ?
+
+x_num_score				DD ?
+y_num_score				DD ?
+x_num_highest			DD ?
+y_num_highest			DD ?
+
+text_score_len			DD ?
+text_highest_len		DD ?
 
 hMUITextScore        	DD ?
 hMUITextHighest         DD ?
 
-g_2_or_4  				DD ?
-
-GameStruct struct
-    m_nRows word GAME_ROWS
-    m_nCols word GAME_COLS
-    m_x byte ?
-    m_y byte ?
-    m_nType byte ?             
-    m_nRotate byte ?      
-    
-    m_nNextType byte ?    
-    m_nNextRotate byte ?  
-    m_nScore Dword 0      
-    m_nState byte ?       
-GameStruct ends 
+block_value  			DD ?
 
 
 
