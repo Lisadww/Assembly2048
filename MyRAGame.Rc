@@ -1,3 +1,4 @@
+#include "Res/GetUserNameDlg.rc"
 #include "Res/MyRAGameRes.rc"
 #include "Res/MyRAGameMnu.rc"
 #include "Res/MyRAGameDlg.rc"

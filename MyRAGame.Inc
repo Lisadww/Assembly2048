@@ -23,7 +23,7 @@ includelib msvcrt.lib
 ;-----------------------------------------------------------------------------------------
 WinMain                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
 WndProc                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
-OnBlockReset            PROTO
+OnBlockReset            PROTO :HDC
 OnDraw					PROTO :HWND,:HDC
 GetOneRandBlock         PROTO
 OnBlockInit				PROTO 
@@ -67,6 +67,9 @@ IDC_CAPTIONBAR          EQU 1001
 IDC_BUTTON_START        EQU 1002
 IDC_TEXTRSHEADER        EQU 1003
 
+;Get User Name Dialog
+IDD_GET_USER_NAME		EQU 2000
+
 ; Main Menu 
 IDM_MENU                EQU 10000
 IDM_NEW_GAME          	EQU 10001
@@ -103,11 +106,12 @@ AboutMsg                DB 'Lisa',13,10,'Copyright © fearless 2022',0
 sz_Button_Start_Text    DB 'Start',0
 sz_Text_Score			DB 'Score',0
 sz_Text_Highest			DB 'Highest',0
-;szNotifyText            DB '23',0
+sz_Text_Win				DB 'Congratulations For 2048 Generated!',0
+sz_Text_Lose			DB 'You have lost... Try to start again.',0
+sz_Text_Result_Reset	DB 'CongratulationssFors2048sGenerated!s',0
 
 
-
-
+sz_Test					DB '%d',0
 
 sz_MessageBox_Title		DD 'Me',
 
@@ -163,6 +167,8 @@ x_num_score				DD ?
 y_num_score				DD ?
 x_num_highest			DD ?
 y_num_highest			DD ?
+
+
 
 text_score_len			DD ?
 text_highest_len		DD ?

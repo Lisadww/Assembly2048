@@ -33,6 +33,7 @@ start:
     Invoke InitCommonControlsEx, offset icc
     
     Invoke WinMain, hInstance, NULL, CommandLine, SW_SHOWDEFAULT
+    ;Invoke WinUserName, hInstance, NULL, CommandLine, SW_SHOWDEFAULT
     Invoke ExitProcess, eax
 
 ;-------------------------------------------------------------------------------------
@@ -64,6 +65,7 @@ WinMain proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
     mov     wc.hCursor,eax
     Invoke RegisterClassEx, addr wc
     Invoke CreateDialogParam, hInstance, IDD_DIALOG, NULL, addr WndProc, NULL
+    ;Invoke CreateDialogParam, hInstance, IDD_GETUSERNAME, NULL, addr WndUserNameProc, NULL
     Invoke ShowWindow, hWnd, SW_SHOWNORMAL
     Invoke UpdateWindow, hWnd
     .WHILE TRUE
@@ -77,12 +79,58 @@ WinMain proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
 WinMain endp
 
 ;-------------------------------------------------------------------------------------
-; OnDraw - painting background
+; WinUserName
+;-------------------------------------------------------------------------------------
+;WinUserName proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
+;    LOCAL   wc:WNDCLASSEX
+;    LOCAL   msg:MSG
+;
+;    mov     wc.cbSize, sizeof WNDCLASSEX
+;    mov     wc.style, 0 ; not including CS_HREDRAW or CS_VREDRAW which helps prevent flickering
+;    mov     wc.lpfnWndProc, offset WndProc
+;    mov     wc.cbClsExtra, NULL
+;    mov     wc.cbWndExtra, DLGWINDOWEXTRA
+;    push    hInst
+;    pop     wc.hInstance
+;    mov     wc.hbrBackground, COLOR_BTNFACE+1 ; COLOR_WINDOW+1
+;    mov     wc.lpszClassName, offset ClassName
+;    ;Invoke LoadIcon, NULL, IDI_APPLICATION
+;    Invoke LoadIcon, hInstance, ICO_LOGO_2048 ; resource icon for main application icon, in this case we use the example system icon
+;    
+;    mov     wc.hIcon, eax
+;    mov     wc.hIconSm, eax
+;    mov     hIconLogo2048, eax
+;    
+;    
+;    Invoke LoadCursor, NULL, IDC_ARROW
+;    mov     wc.hCursor,eax
+;    Invoke RegisterClassEx, addr wc
+;    ;Invoke CreateDialogParam, hInstance, IDD_DIALOG, NULL, addr WndProc, NULL
+;    Invoke CreateDialogParam, hInstance, IDD_GETUSERNAME, NULL, addr WndUserNameProc, NULL
+;    ;Invoke ShowWindow, hWnd, SW_SHOWNORMAL
+;    Invoke UpdateWindow, hWnd
+;    .WHILE TRUE
+;        invoke GetMessage, addr msg, NULL, 0, 0
+;      .BREAK .if !eax
+;        Invoke TranslateMessage, addr msg
+;        Invoke DispatchMessage, addr msg
+;    .ENDW
+;    mov eax, msg.wParam
+;    ret
+;WinUserName endp
+
+;-------------------------------------------------------------------------------------
+; OnBlockReset - Reset block data and display
 ;-------------------------------------------------------------------------------------
 
-OnBlockReset proc uses edx ecx
+OnBlockReset proc uses edx ecx hdc:HDC
 
+	LOCAL x1,y1,x2,y2:dword
+    LOCAL @color:HBRUSH
+    LOCAL @hdc:HDC
+	local @rrt:RECT
 	LOCAL i:DWORD
+	
 	mov i, 0
 	.while i < 16
 		push i
@@ -90,6 +138,9 @@ OnBlockReset proc uses edx ecx
 		mov BLOCK[edx], 0
 		inc i
 	.endw
+	
+	mov num_score, 0
+	mov num_highest_score, 0
 	
 	invoke GetModuleHandle, NULL
     invoke LoadIcon, eax, ICO_BROWN_COLOR_BLOCK
@@ -162,6 +213,43 @@ OnBlockReset proc uses edx ecx
     invoke GetModuleHandle, NULL
     invoke LoadIcon, eax, NUM_BLOCK_BASIC
     mov hIconBlock16, eax
+    
+    ;set the cover color
+    invoke CreateSolidBrush, 00A9B3B8h
+    mov @color, eax
+    
+    invoke GetWindowDC, hWnd
+    mov @hdc, eax
+   
+;	invoke GetClientRect, hWnd, addr @rrt
+;	
+;	invoke BeginPaint, hWnd, addr @rrt
+;	
+;	mov ecx, x_num_score
+;    		sub ecx, 10
+;            mov edx, y_num_score
+;            add edx, 50
+;            
+;    push x_num_score
+;    pop x1
+;    sub x1,30
+;    
+;    push y_num_score
+;    pop y1
+;	add y1, 50
+;	
+;	push x1
+;	pop x2
+;	add x2, 150
+;	
+;	push y1
+;	pop y2
+;	add y2, 16
+;	
+;	invoke SetRect, addr @rrt, x1, y1, x2, y2
+;    invoke FillRect, @hdc, addr @rrt, @color
+;    
+;    invoke EndPaint,hWnd,addr @rrt
     
     ret
 OnBlockReset endp
@@ -472,90 +560,9 @@ OnDraw proc uses edx ecx hWin:HWND, hdc:HDC
 	ret
 OnDraw endp
 
-;-------------------------------------------------------------------------------------
-; PutOneBlockIntoArrayAndShow - painting the highest score box and the current score box
-;-------------------------------------------------------------------------------------
-
-PutOneBlockIntoArrayAndShow proc uses edx ecx, block_num:DWORD
-    
-	local @hdc:HDC
-	
-	invoke GetModuleHandle, NULL
-	mov @hdc, eax
-	
-	mov edx,block_num
-	
-	;----------------------------------------
-	; this part should be writen in logical part
-	.if block_value == 0
-		mov BLOCK[edx],2
-		invoke LoadIcon, @hdc, NUM_BLOCK_2
-
-	.elseif block_value == 1
-		mov BLOCK[edx],4
-		invoke LoadIcon, @hdc, NUM_BLOCK_4
-		
-	.endif
-	;----------------------------------------
-	
-	mov @hdc, eax
-    
-    .if block_num == 0
-    	mov edx, @hdc
-    	mov hIconBlock1, edx
-    .elseif block_num == 1
-    	mov edx, @hdc
-    	mov hIconBlock2, edx
-    .elseif block_num == 2
-    	mov edx, @hdc
-    	mov hIconBlock3, edx
-    .elseif block_num == 3
-    	mov edx, @hdc
-    	mov hIconBlock4, edx
-    .elseif block_num == 4
-    	mov edx, @hdc
-    	mov hIconBlock5, edx
-    .elseif block_num == 5
-    	mov edx, @hdc
-    	mov hIconBlock6, edx
-    .elseif block_num == 6
-    	mov edx, @hdc
-    	mov hIconBlock7, edx
-    .elseif block_num == 7
-    	mov edx, @hdc
-    	mov hIconBlock8, edx
-    .elseif block_num == 8
-    	mov edx, @hdc
-    	mov hIconBlock9, edx
-    .elseif block_num == 9
-    	mov edx, @hdc
-    	mov hIconBlock10, edx
-    .elseif block_num == 10
-    	mov edx, @hdc
-    	mov hIconBlock11, edx
-    .elseif block_num == 11
-    	mov edx, @hdc
-    	mov hIconBlock12, edx
-    .elseif block_num == 12
-    	mov edx, @hdc
-    	mov hIconBlock13, edx
-    .elseif block_num == 13
-    	mov edx, @hdc
-    	mov hIconBlock14, edx
-    .elseif block_num == 14
-    	mov edx, @hdc
-    	mov hIconBlock15, edx
-    .elseif block_num == 15
-    	mov edx, @hdc
-    	mov hIconBlock16, edx
-    .endif
-    
-	ret
-	
-PutOneBlockIntoArrayAndShow endp
 
 ;-------------------------------------------------------------------------------------
-; GetOneRandBlock - painting the highest score box and the current score box
+; GetOneRandBlock - Randomly generate 2 or 4 blocks at undefined locations
 ;-------------------------------------------------------------------------------------
 
 GetOneRandBlock proc uses edx ecx 
@@ -586,39 +593,49 @@ GetOneRandBlock proc uses edx ecx
 	
 GetOneRandBlock endp
 
-
-
-
 ;-------------------------------------------------------------------------------------
-; OnBlockInit - painting the highest score box and the current score box
+; OnBlockInit - Initialization after clicking on new game
 ;-------------------------------------------------------------------------------------
 
-OnBlockInit proc uses edx ecx hdc:HDC
-
-	invoke OnBlockReset
+OnBlockInit proc uses edx ecx
+	local @hdc:HDC
+	
+	invoke GetModuleHandle, NULL
+	mov @hdc, eax
+	
+	invoke OnBlockReset, @hdc
+	
     invoke GetOneRandBlock
     mov edx,temp_block_num
 	.if block_value == 0
 		mov BLOCK[edx],2
-		invoke LoadIcon, hdc, NUM_BLOCK_2
+		invoke LoadIcon, @hdc, NUM_BLOCK_2
 		mov hIconTemp, eax	
-		;Invoke SendMessage,hWnd,WM_CLOSE,0,0
 	.elseif block_value == 1
 		mov BLOCK[edx],4
-		invoke LoadIcon, hdc, NUM_BLOCK_4
+		invoke LoadIcon, @hdc, NUM_BLOCK_4
 		mov hIconTemp, eax	
 	.endif
 	invoke DetermineBlockHandle
-    ;invoke PutOneBlockIntoArrayAndShow, temp_block_num
     
     invoke Sleep, 10
+    
     invoke GetOneRandBlock
     mov edx, temp_block_num
     .while BLOCK[edx] != 0
 		invoke GetOneRandBlock
 		mov edx, temp_block_num
 	.endw
-    invoke PutOneBlockIntoArrayAndShow, temp_block_num
+    .if block_value == 0
+		mov BLOCK[edx],2
+		invoke LoadIcon, @hdc, NUM_BLOCK_2
+		mov hIconTemp, eax	
+	.elseif block_value == 1
+		mov BLOCK[edx],4
+		invoke LoadIcon, @hdc, NUM_BLOCK_4
+		mov hIconTemp, eax	
+	.endif
+	invoke DetermineBlockHandle
 
         
     ret
@@ -626,7 +643,7 @@ OnBlockInit endp
 
 
 ;-------------------------------------------------------------------------------------
-; OnBlockUpdate - 
+; OnBlockUpdate - Display update after moving blocks
 ;-------------------------------------------------------------------------------------
 
 OnBlockUpdate proc uses edx ecx
@@ -640,7 +657,9 @@ OnBlockUpdate proc uses edx ecx
 		mov edx, i
 		mov temp_block_num, edx
 		invoke ChangeBlockResource, BLOCK[edx]
+		;invoke crt_printf, offset sz_Test, BLOCK[edx]
 		invoke DetermineBlockHandle
+		
 		inc i
 	.endw
 
@@ -649,7 +668,7 @@ OnBlockUpdate proc uses edx ecx
 OnBlockUpdate endp
 
 ;-------------------------------------------------------------------------------------
-; ChangeBlockResource - 
+; ChangeBlockResource - Change the icon of a block
 ;-------------------------------------------------------------------------------------
 
 ChangeBlockResource proc value:DWORD
@@ -711,7 +730,7 @@ ChangeBlockResource proc value:DWORD
 ChangeBlockResource endp
 
 ;-------------------------------------------------------------------------------------
-; DetermineBlockHandle - 
+; DetermineBlockHandle - Determine the handle of the block to be changed
 ;-------------------------------------------------------------------------------------
 
 DetermineBlockHandle proc 
@@ -728,27 +747,26 @@ DetermineBlockHandle proc
 	.if temp_block_num == 0
 		mov ecx, hIconTemp 
     	mov hIconBlock1, ecx
-    	Invoke SendMessage,hWnd,WM_CLOSE,0,0
+    	
     .elseif temp_block_num == 1
     	mov ecx, hIconTemp 
     	mov hIconBlock2, ecx
-    	Invoke SendMessage,hWnd,WM_CLOSE,0,0
+    	
     .elseif temp_block_num == 2
     	mov ecx, hIconTemp 
     	mov hIconBlock3, ecx
-    	Invoke SendMessage,hWnd,WM_CLOSE,0,0
+    	
     .elseif temp_block_num == 3
     	mov ecx, hIconTemp 
     	mov hIconBlock4, ecx
-    	Invoke SendMessage,hWnd,WM_CLOSE,0,0
     .elseif temp_block_num == 4
     	mov ecx, hIconTemp
     	mov hIconBlock5, ecx
-    	Invoke SendMessage,hWnd,WM_CLOSE,0,0
+    	
     .elseif temp_block_num == 5
     	mov ecx, hIconTemp 
     	mov hIconBlock6, ecx
-    	Invoke SendMessage,hWnd,WM_CLOSE,0,0
+    	
     .elseif temp_block_num == 6
     	mov ecx, hIconTemp 
     	mov hIconBlock7, ecx
@@ -794,13 +812,17 @@ DetermineBlockHandle proc
     ret
 DetermineBlockHandle endp
 
+;-------------------------------------------------------------------------------------
+; OnScoreUpdate - Update the displayed current score and highest
+;-------------------------------------------------------------------------------------
+
 OnScoreUpdate proc hWin:HWND
 
 	LOCAL @hdc:HDC
 	local @rrt:RECT
 	
-	invoke GetClientRect, hWin, addr @rrt
-	mov @rrt.top, 50
+	;invoke GetClientRect, hWin, addr @rrt
+	;mov @rrt.top, 50
 	
 	;set the text's color 
     invoke SetTextColor, @hdc, 0F5F5F5h
@@ -867,7 +889,7 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         pop hWnd
         
         ; Init Stuff Here
-        invoke OnBlockReset
+        invoke OnBlockReset, @hdc
         
     .ELSEIF eax == WM_TIMER
         mov eax, wParam
@@ -928,7 +950,7 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         .ELSEIF eax == IDM_NEW_GAME
             invoke GetWindowDC, hWin
         	mov @hdc, eax  
-            invoke OnBlockInit, @hdc
+            invoke OnBlockInit
             invoke OnScoreUpdate, hWin
             
             Invoke SendMessage,hWin,WM_PAINT,0,0
@@ -949,9 +971,37 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             ;*********************
             ; update score example
             ;*********************
-            add num_highest_score,2
+            add num_highest_score,2 ; use for test
             invoke OnScoreUpdate,hWin
             Invoke SendMessage,hWin,WM_PAINT,0,0
+            
+            ;****************************
+            ; output game result example
+            ;****************************
+            ;win 
+;            push @hdc
+;            invoke GetWindowDC, hWin
+;        	mov @hdc, eax
+;            invoke SetTextColor, @hdc, 004A5359h
+;    		invoke SetBkMode, @hdc, TRANSPARENT
+;    		mov ecx, x_num_score
+;    		sub ecx, 30
+;            mov edx, y_num_score
+;            add edx, 50
+;            invoke TextOut, @hdc, ecx, edx, addr sz_Text_Win, 35
+;            pop @hdc
+            ;lose
+            push @hdc
+            invoke GetWindowDC, hWin
+        	mov @hdc, eax
+            invoke SetTextColor, @hdc, 004A5359h
+    		invoke SetBkMode, @hdc, TRANSPARENT
+    		mov ecx, x_num_score
+    		sub ecx, 10
+            mov edx, y_num_score
+            add edx, 50
+            invoke TextOut, @hdc, ecx, edx, addr sz_Text_Lose, 37
+            pop @hdc
             
         .ELSEIF eax == IDM_RANK
             ;TODO
