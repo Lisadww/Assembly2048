@@ -17,13 +17,17 @@ includelib comdlg32.lib
 includelib masm32.lib
 includelib msvcrt.lib
 
-
 ;-----------------------------------------------------------------------------------------
 ; Prototypes
 ;-----------------------------------------------------------------------------------------
 WinMain                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
 WndProc                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
-OnBlockReset            PROTO
+WinUserName		PROTO :DWORD,:DWORD,:DWORD,:DWORD
+WndUserNameProc		PROTO :DWORD,:DWORD,:DWORD,:DWORD
+WinRank		PROTO :DWORD,:DWORD,:DWORD,:DWORD
+WndRankProc		PROTO :DWORD,:DWORD,:DWORD,:DWORD
+
+OnBlockReset            PROTO :HDC
 OnDraw					PROTO :HWND,:HDC
 GetOneRandBlock         PROTO
 OnBlockInit				PROTO 
@@ -35,7 +39,13 @@ OnKeydown				PROTO :HWND,:UINT,:WPARAM,:LPARAM
 MessageBoxW			PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
 
+initDataBase proto
+saveGame proto :dword, :dword, :dword
+loadGame proto :dword
+getScore proto :dword
+createTable proto
 
+public BLOCK
 
 .CONST
 ;-----------------------------------------------------------------------------------------
@@ -69,12 +79,25 @@ IDC_TEXTRSHEADER        EQU 1003
 
 ;Get User Name Dialog
 IDD_GET_USER_NAME		EQU 2000
+IDC_OK	EQU 2001
+IDC_NAME	EQU 2002
+
+;RANK LIST Dialog
+IDD_RANK	EQU	3000
+IDC_RANK	EQU	3001
+IDC_STC1	EQU	3002
+IDC_STC2	EQU	3003
+IDC_STC3	EQU	3004
+IDC_STC4	EQU	3005
+IDC_STC5	EQU	3006
 
 ; Main Menu 
 IDM_MENU                EQU 10000
 IDM_NEW_GAME          	EQU 10001
 IDM_OPEN	          	EQU 10002
 IDM_SAVE	          	EQU 10003
+IDM_NAME	EQU 10004
+
 IDM_FILE_EXIT           EQU 10010
 IDM_HELP_ABOUT          EQU 10101
 IDM_RANK				EQU 11000
@@ -99,6 +122,10 @@ GAME_BOX_WIDTH        EQU 85
 ;-----------------------------------------------------------------------------------------
 ; Initialized Data
 ;-----------------------------------------------------------------------------------------
+
+
+;TS
+dbname      db       'data.db',0  
 ClassName               DB 'DLGCLASS',0
 AppName                 DB 'MyRAGame',0
 AboutMsg                DB 'Lisa',13,10,'Copyright © fearless 2022',0
@@ -106,8 +133,9 @@ AboutMsg                DB 'Lisa',13,10,'Copyright © fearless 2022',0
 sz_Button_Start_Text    DB 'Start',0
 sz_Text_Score			DB 'Score',0
 sz_Text_Highest			DB 'Highest',0
-sz_Text_Win				DB 'Congratulations!',0ah,'2048 generated!',0
-sz_Text_Lose			DB 'You have lost...',10,'Try to start again.',0
+sz_Text_Win				DB 'Congratulations For 2048 Generated!',0
+sz_Text_Lose			DB 'You have lost... Try to start again.',0
+sz_Text_Result_Reset	DB 'CongratulationssFors2048sGenerated!s',0
 
 
 sz_Test					DB '%d',0
@@ -125,6 +153,9 @@ num_highest_score		DD 0
 BLOCK  					DD 16 DUP(0)
 
 temp_block_num			DD 0
+
+;TS
+test_score	dd 20
 
 .DATA?
 ;-----------------------------------------------------------------------------------------
@@ -176,6 +207,9 @@ hMUITextScore        	DD ?
 hMUITextHighest         DD ?
 
 block_value  			DD ?
+
+;TS
+user_name	db 16 dup(?)
 
 
 

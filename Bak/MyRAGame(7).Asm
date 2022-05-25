@@ -18,6 +18,31 @@ option casemap:none
 ;ENDIF
 
 include MyRAGame.inc
+;include record1.asm
+;include record.inc
+
+
+printf      PROTO C :dword, :VARARG  ; for test
+
+
+sql_open  typedef proto :dword,:dword
+SQL_Open  typedef ptr   sql_open
+
+sql_close typedef proto :dword
+SQL_Close typedef ptr   sql_close
+
+callback  typedef proto :dword,:dword,:dword,:dword
+CallBack  typedef ptr   callback
+
+sql_exec  typedef proto :dword,:dword,:CallBack,:dword,:dword
+SQL_Exec  typedef ptr   sql_exec
+
+sql_slct  typedef proto :dword,:dword,:dword,:dword,:dword,:dword
+SQL_Slct  typedef ptr   sql_slct
+
+
+
+
 
 .code
 
@@ -32,14 +57,21 @@ start:
     mov icc.dwICC, ICC_COOL_CLASSES or ICC_STANDARD_CLASSES or ICC_WIN95_CLASSES
     Invoke InitCommonControlsEx, offset icc
     
-    Invoke WinMain, hInstance, NULL, CommandLine, SW_SHOWDEFAULT
+    invoke initDataBase
+    ;TODO: can only createTable before.
+    ;invoke createTable
+   
     ;Invoke WinUserName, hInstance, NULL, CommandLine, SW_SHOWDEFAULT
+    Invoke WinMain, hInstance, NULL, CommandLine, SW_SHOWDEFAULT
+    
     Invoke ExitProcess, eax
 
+
 ;-------------------------------------------------------------------------------------
-; WinMain
+; WinUserName
 ;-------------------------------------------------------------------------------------
-WinMain proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
+
+WinUserName proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
     LOCAL   wc:WNDCLASSEX
     LOCAL   msg:MSG
 
@@ -64,8 +96,103 @@ WinMain proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
     Invoke LoadCursor, NULL, IDC_ARROW
     mov     wc.hCursor,eax
     Invoke RegisterClassEx, addr wc
+
+    ;TS
+    Invoke CreateDialogParam, hInstance, IDD_GET_USER_NAME, NULL, addr WndUserNameProc, NULL
+
+    
+    Invoke ShowWindow, hWnd, SW_SHOWNORMAL
+    Invoke UpdateWindow, hWnd
+    .WHILE TRUE
+        invoke GetMessage, addr msg, NULL, 0, 0
+      .BREAK .if !eax
+        Invoke TranslateMessage, addr msg
+        Invoke DispatchMessage, addr msg
+    .ENDW
+    mov eax, msg.wParam
+    ret
+WinUserName endp
+
+;-------------------------------------------------------------------------------------
+; WinUserName
+;-------------------------------------------------------------------------------------
+
+WinRank proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
+    LOCAL   wc:WNDCLASSEX
+    LOCAL   msg:MSG
+
+    mov     wc.cbSize, sizeof WNDCLASSEX
+    mov     wc.style, 0 ; not including CS_HREDRAW or CS_VREDRAW which helps prevent flickering
+    mov     wc.lpfnWndProc, offset WndProc
+    mov     wc.cbClsExtra, NULL
+    mov     wc.cbWndExtra, DLGWINDOWEXTRA
+    push    hInst
+    pop     wc.hInstance
+    mov     wc.hbrBackground, COLOR_BTNFACE+1 ; COLOR_WINDOW+1
+    mov     wc.lpszMenuName, IDM_MENU
+    mov     wc.lpszClassName, offset ClassName
+    ;Invoke LoadIcon, NULL, IDI_APPLICATION
+    Invoke LoadIcon, hInstance, ICO_LOGO_2048 ; resource icon for main application icon, in this case we use the example system icon
+    
+    mov     wc.hIcon, eax
+    mov     wc.hIconSm, eax
+    mov     hIconLogo2048, eax
+    
+    
+    Invoke LoadCursor, NULL, IDC_ARROW
+    mov     wc.hCursor,eax
+    Invoke RegisterClassEx, addr wc
+
+    ;TS
+    Invoke CreateDialogParam, hInstance, IDD_RANK, NULL, addr WndRankProc, NULL
+
+    
+    Invoke ShowWindow, hWnd, SW_SHOWNORMAL
+    Invoke UpdateWindow, hWnd
+    .WHILE TRUE
+        invoke GetMessage, addr msg, NULL, 0, 0
+      .BREAK .if !eax
+        Invoke TranslateMessage, addr msg
+        Invoke DispatchMessage, addr msg
+    .ENDW
+    mov eax, msg.wParam
+    ret
+WinRank endp
+;-------------------------------------------------------------------------------------
+; WinMain
+;-------------------------------------------------------------------------------------
+WinMain proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
+    LOCAL   wc:WNDCLASSEX
+    LOCAL   msg:MSG
+    ;LOCAL   pare:HWND 
+    mov     wc.cbSize, sizeof WNDCLASSEX
+    mov     wc.style, 0 ; not including CS_HREDRAW or CS_VREDRAW which helps prevent flickering
+    mov     wc.lpfnWndProc, offset WndProc
+    mov     wc.cbClsExtra, NULL
+    mov     wc.cbWndExtra, DLGWINDOWEXTRA
+    push    hInst
+    pop     wc.hInstance
+    mov     wc.hbrBackground, COLOR_BTNFACE+1 ; COLOR_WINDOW+1
+    mov     wc.lpszMenuName, IDM_MENU
+    mov     wc.lpszClassName, offset ClassName
+    ;Invoke LoadIcon, NULL, IDI_APPLICATION
+    Invoke LoadIcon, hInstance, ICO_LOGO_2048 ; resource icon for main application icon, in this case we use the example system icon
+    
+    mov     wc.hIcon, eax
+    mov     wc.hIconSm, eax
+    mov     hIconLogo2048, eax
+    
+    
+    Invoke LoadCursor, NULL, IDC_ARROW
+    mov     wc.hCursor,eax
+    Invoke RegisterClassEx, addr wc
+
+    ;TS
+    ;Invoke CreateDialogParam, hInstance, IDD_GET_USER_NAME, NULL, addr WndUserNameProc, NULL
+
     Invoke CreateDialogParam, hInstance, IDD_DIALOG, NULL, addr WndProc, NULL
-    ;Invoke CreateDialogParam, hInstance, IDD_GETUSERNAME, NULL, addr WndUserNameProc, NULL
+    
+    
     Invoke ShowWindow, hWnd, SW_SHOWNORMAL
     Invoke UpdateWindow, hWnd
     .WHILE TRUE
@@ -78,46 +205,8 @@ WinMain proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
     ret
 WinMain endp
 
-;-------------------------------------------------------------------------------------
-; WinUserName
-;-------------------------------------------------------------------------------------
-;WinUserName proc hInst:HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR,CmdShow:DWORD
-;    LOCAL   wc:WNDCLASSEX
-;    LOCAL   msg:MSG
-;
-;    mov     wc.cbSize, sizeof WNDCLASSEX
-;    mov     wc.style, 0 ; not including CS_HREDRAW or CS_VREDRAW which helps prevent flickering
-;    mov     wc.lpfnWndProc, offset WndProc
-;    mov     wc.cbClsExtra, NULL
-;    mov     wc.cbWndExtra, DLGWINDOWEXTRA
-;    push    hInst
-;    pop     wc.hInstance
-;    mov     wc.hbrBackground, COLOR_BTNFACE+1 ; COLOR_WINDOW+1
-;    mov     wc.lpszClassName, offset ClassName
-;    ;Invoke LoadIcon, NULL, IDI_APPLICATION
-;    Invoke LoadIcon, hInstance, ICO_LOGO_2048 ; resource icon for main application icon, in this case we use the example system icon
-;    
-;    mov     wc.hIcon, eax
-;    mov     wc.hIconSm, eax
-;    mov     hIconLogo2048, eax
-;    
-;    
-;    Invoke LoadCursor, NULL, IDC_ARROW
-;    mov     wc.hCursor,eax
-;    Invoke RegisterClassEx, addr wc
-;    ;Invoke CreateDialogParam, hInstance, IDD_DIALOG, NULL, addr WndProc, NULL
-;    Invoke CreateDialogParam, hInstance, IDD_GETUSERNAME, NULL, addr WndUserNameProc, NULL
-;    ;Invoke ShowWindow, hWnd, SW_SHOWNORMAL
-;    Invoke UpdateWindow, hWnd
-;    .WHILE TRUE
-;        invoke GetMessage, addr msg, NULL, 0, 0
-;      .BREAK .if !eax
-;        Invoke TranslateMessage, addr msg
-;        Invoke DispatchMessage, addr msg
-;    .ENDW
-;    mov eax, msg.wParam
-;    ret
-;WinUserName endp
+
+
 
 ;-------------------------------------------------------------------------------------
 ; OnBlockReset - Reset block data and display
@@ -135,7 +224,7 @@ OnBlockReset proc uses edx ecx hdc:HDC
 	.while i < 16
 		push i
 		pop edx
-		mov BLOCK[edx], 0
+		mov BLOCK[edx*4], 0
 		inc i
 	.endw
 	
@@ -215,7 +304,7 @@ OnBlockReset proc uses edx ecx hdc:HDC
     mov hIconBlock16, eax
     
     ;set the cover color
-    invoke CreateSolidBrush, 00A9B3B8h
+    invoke CreateSolidBrush, 0FBFBFAH
     mov @color, eax
     
     invoke GetWindowDC, hWnd
@@ -223,12 +312,24 @@ OnBlockReset proc uses edx ecx hdc:HDC
    
 	invoke GetClientRect, hWnd, addr @rrt
 	
-	invoke BeginPaint, hWnd, addr @rrt
+    push x_num_score
+    pop x1
+    sub x1,30
+    
+    push y_num_score
+    pop y1
+	add y1, 50
+	
+	push x1
+	pop x2
+	add x2, 280
+	
+	push y1
+	pop y2
+	add y2, 16
 	
 	invoke SetRect, addr @rrt, x1, y1, x2, y2
     invoke FillRect, @hdc, addr @rrt, @color
-    
-    invoke EndPaint,hWnd,addr @rrt
     
     ret
 OnBlockReset endp
@@ -574,9 +675,11 @@ GetOneRandBlock endp
 
 ;-------------------------------------------------------------------------------------
 ; OnBlockInit - Initialization after clicking on new game
+;TS: fix the bug->you should use BLOCK[edx*4] instead of BLOCK[edx], because the type of BLOCK is dword.
 ;-------------------------------------------------------------------------------------
 
 OnBlockInit proc uses edx ecx
+
 	local @hdc:HDC
 	
 	invoke GetModuleHandle, NULL
@@ -587,11 +690,11 @@ OnBlockInit proc uses edx ecx
     invoke GetOneRandBlock
     mov edx,temp_block_num
 	.if block_value == 0
-		mov BLOCK[edx],2
+		mov BLOCK[edx*4],2
 		invoke LoadIcon, @hdc, NUM_BLOCK_2
 		mov hIconTemp, eax	
 	.elseif block_value == 1
-		mov BLOCK[edx],4
+		mov BLOCK[edx*4],4
 		invoke LoadIcon, @hdc, NUM_BLOCK_4
 		mov hIconTemp, eax	
 	.endif
@@ -601,16 +704,16 @@ OnBlockInit proc uses edx ecx
     
     invoke GetOneRandBlock
     mov edx, temp_block_num
-    .while BLOCK[edx] != 0
+    .while BLOCK[edx*4] != 0
 		invoke GetOneRandBlock
 		mov edx, temp_block_num
 	.endw
     .if block_value == 0
-		mov BLOCK[edx],2
+		mov BLOCK[edx*4],2
 		invoke LoadIcon, @hdc, NUM_BLOCK_2
 		mov hIconTemp, eax	
 	.elseif block_value == 1
-		mov BLOCK[edx],4
+		mov BLOCK[edx*4],4
 		invoke LoadIcon, @hdc, NUM_BLOCK_4
 		mov hIconTemp, eax	
 	.endif
@@ -623,6 +726,7 @@ OnBlockInit endp
 
 ;-------------------------------------------------------------------------------------
 ; OnBlockUpdate - Display update after moving blocks
+
 ;-------------------------------------------------------------------------------------
 
 OnBlockUpdate proc uses edx ecx
@@ -635,7 +739,7 @@ OnBlockUpdate proc uses edx ecx
 	.while i<16
 		mov edx, i
 		mov temp_block_num, edx
-		invoke ChangeBlockResource, BLOCK[edx]
+		invoke ChangeBlockResource, BLOCK[edx*4]
 		;invoke crt_printf, offset sz_Test, BLOCK[edx]
 		invoke DetermineBlockHandle
 		
@@ -849,6 +953,7 @@ P_EXIT:
 
 OnKeydown endp
 
+
 ;-------------------------------------------------------------------------------------
 ; WndProc - Main Window Message Loop
 ;-------------------------------------------------------------------------------------
@@ -925,6 +1030,9 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             
         .ELSEIF eax == IDM_HELP_ABOUT
             Invoke ShellAbout,hWin,addr AppName,addr AboutMsg,NULL
+            
+        .ELSEIF eax == IDM_NAME
+            invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
         
         .ELSEIF eax == IDM_NEW_GAME
             invoke GetWindowDC, hWin
@@ -940,50 +1048,29 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             ;*****************************
             ; update block's show example
             ;*****************************
+            invoke GetWindowDC, hWin
+        	mov @hdc, eax  
+            invoke OnBlockReset,@hdc
+            invoke loadGame, offset user_name
             
+            ;invoke printf, offset BLOCK
+            
+            invoke OnScoreUpdate, hWin
             invoke OnBlockUpdate
             Invoke SendMessage,hWin,WM_PAINT,0,0
             
         .ELSEIF eax == IDM_SAVE
-            ;TODO
             
-            ;*********************
-            ; update score example
-            ;*********************
-            add num_highest_score,2 ; use for test
-            invoke OnScoreUpdate,hWin
-            Invoke SendMessage,hWin,WM_PAINT,0,0
-            
-            ;****************************
-            ; output game result example
-            ;****************************
-            ;win 
-;            push @hdc
-;            invoke GetWindowDC, hWin
-;        	mov @hdc, eax
-;            invoke SetTextColor, @hdc, 004A5359h
-;    		invoke SetBkMode, @hdc, TRANSPARENT
-;    		mov ecx, x_num_score
-;    		sub ecx, 30
-;            mov edx, y_num_score
-;            add edx, 50
-;            invoke TextOut, @hdc, ecx, edx, addr sz_Text_Win, 35
-;            pop @hdc
-            ;lose
-            push @hdc
-            invoke GetWindowDC, hWin
-        	mov @hdc, eax
-            invoke SetTextColor, @hdc, 004A5359h
-    		invoke SetBkMode, @hdc, TRANSPARENT
-    		mov ecx, x_num_score
-    		sub ecx, 10
-            mov edx, y_num_score
-            add edx, 50
-            invoke TextOut, @hdc, ecx, edx, addr sz_Text_Lose, 37
-            pop @hdc
+            invoke saveGame, offset BLOCK, offset user_name, offset test_score
             
         .ELSEIF eax == IDM_RANK
-            ;TODO
+            
+		;Invoke WinRank, hInstance, NULL, NULL, SW_SHOWDEFAULT
+		invoke prepareRankInfo
+             ;invoke  MessageBox,NULL,offset rank_info1,offset dbname,MB_OK
+		invoke DialogBoxParam, hInstance, IDD_RANK, hWin, addr WndRankProc, NULL
+		
+		
             
         .ENDIF
 
@@ -1003,5 +1090,207 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
     xor    eax,eax
     ret
 WndProc endp
+
+
+
+WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
+
+
+local @ps:PAINTSTRUCT
+    local @hdc:HDC
+    local @szBuff[100]:TCHAR
+	local @rt:RECT
+	local @crText:COLORREF
+	local @dwLen:dword
+	LOCAL @backgroundColor:HBRUSH
+    
+    mov eax, uMsg
+    .IF eax == WM_INITDIALOG
+        ;push hWin
+        ;pop hWnd
+        
+        
+    .ELSEIF eax == WM_TIMER
+        mov eax, wParam
+        .IF eax == hWin
+            Invoke KillTimer, hWin, hWin
+            
+        .ENDIF
+        
+    ;---------------------------------------------------------------------------------------------------------------
+    ; Handle painting of our dialog with our specified background and border color to mimic new Modern style UI feel
+    ;---------------------------------------------------------------------------------------------------------------
+    .ELSEIF eax == WM_ERASEBKGND
+        mov eax, 1
+        ret
+
+    .ELSEIF eax == WM_PAINT
+        
+        ;Draw background
+        invoke GetClientRect, hWin, addr @rt  ; get the coordinate of the window
+        
+       	invoke BeginPaint,hWin,addr @rt
+        
+        invoke GetWindowDC, hWin
+        mov @hdc, eax
+          
+        invoke CreateSolidBrush, 0FBFBFAH
+        mov @backgroundColor, eax
+        
+        mov @rt.top, 50
+        add @rt.bottom, 50
+        
+        invoke FillRect, @hdc, addr @rt, @backgroundColor
+        
+        ;invoke GetWindowDC, hWin
+        ;mov @hdc, eax
+          
+		;invoke OnDraw, hWin, @hdc
+		
+		;invoke TextOut, @hdc, x_num_score, y_num_score, addr text_score, text_score_len
+		;invoke TextOut, @hdc, x_num_highest, y_num_highest, addr text_highest_score, text_highest_len
+		
+        invoke EndPaint,hWin,addr @rt
+        
+        
+        mov eax, 0
+        ret
+    ;---------------------------------------------------------------------------------------------------------------
+    
+    .ELSEIF eax == WM_COMMAND
+        mov eax, wParam
+        and eax, 0FFFFh
+        .IF eax == IDC_OK
+            Invoke GetDlgItemText,hWin,IDC_NAME,offset user_name,sizeof user_name
+            ;Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
+            
+            Invoke SendMessage,hWin,WM_CLOSE,0,0 
+
+        .ENDIF
+
+	.ELSEIF eax == WM_KEYDOWN
+		invoke OnKeydown, hWin, eax, wParam, lParam
+		
+    .ELSEIF eax == WM_CLOSE
+    	invoke GetActiveWindow
+        Invoke EndDialog,eax, 0
+        
+    .ELSEIF eax == WM_DESTROY
+        ;Invoke PostQuitMessage,NULL
+        
+    .ELSE
+        Invoke DefWindowProc,hWin,uMsg,wParam,lParam
+        ret
+    .ENDIF
+    xor    eax,eax
+    ret
+
+    
+WndUserNameProc endp
+
+
+
+WndRankProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
+
+
+local @ps:PAINTSTRUCT
+    local @hdc:HDC
+    local @szBuff[100]:TCHAR
+	local @rt:RECT
+	local @crText:COLORREF
+	local @dwLen:dword
+	LOCAL @backgroundColor:HBRUSH
+    
+    mov eax, uMsg
+    .IF eax == WM_INITDIALOG
+   		Invoke SetDlgItemText,hWin,IDC_RANK,offset sz_Text_Rank
+    		Invoke SetDlgItemText,hWin,IDC_STC1,offset rank_info1
+		Invoke SetDlgItemText,hWin,IDC_STC2,offset rank_info2
+		Invoke SetDlgItemText,hWin,IDC_STC3,offset rank_info3
+		Invoke SetDlgItemText,hWin,IDC_STC4,offset rank_info4
+		Invoke SetDlgItemText,hWin,IDC_STC5,offset rank_info5
+        ;push hWin
+        ;pop hWnd
+        
+        
+    .ELSEIF eax == WM_TIMER
+        mov eax, wParam
+        .IF eax == hWin
+            Invoke KillTimer, hWin, hWin
+            
+        .ENDIF
+        
+    ;---------------------------------------------------------------------------------------------------------------
+    ; Handle painting of our dialog with our specified background and border color to mimic new Modern style UI feel
+    ;---------------------------------------------------------------------------------------------------------------
+    .ELSEIF eax == WM_ERASEBKGND
+        mov eax, 1
+        ret
+
+    .ELSEIF eax == WM_PAINT
+    	
+        
+        ;Draw background
+        invoke GetClientRect, hWin, addr @rt  ; get the coordinate of the window
+        
+       	invoke BeginPaint,hWin,addr @rt
+        
+        invoke GetWindowDC, hWin
+        mov @hdc, eax
+          
+        invoke CreateSolidBrush, 0FBFBFAH
+        mov @backgroundColor, eax
+        
+        mov @rt.top, 50
+        add @rt.bottom, 50
+        
+        Invoke SetDlgItemText,hWin,IDC_RANK,offset sz_Text_Rank
+    	Invoke SetDlgItemText,hWin,IDC_STC1,offset rank_info1
+	Invoke SetDlgItemText,hWin,IDC_STC2,offset rank_info2
+	Invoke SetDlgItemText,hWin,IDC_STC3,offset rank_info3
+	Invoke SetDlgItemText,hWin,IDC_STC4,offset rank_info4
+	Invoke SetDlgItemText,hWin,IDC_STC5,offset rank_info5
+        
+        
+        invoke FillRect, @hdc, addr @rt, @backgroundColor
+        
+        ;invoke GetWindowDC, hWin
+        ;mov @hdc, eax
+          
+		;invoke OnDraw, hWin, @hdc
+		
+		;invoke TextOut, @hdc, x_num_score, y_num_score, addr text_score, text_score_len
+		;invoke TextOut, @hdc, x_num_highest, y_num_highest, addr text_highest_score, text_highest_len
+		
+        invoke EndPaint,hWin,addr @rt
+        
+        
+        mov eax, 0
+        ret
+    ;---------------------------------------------------------------------------------------------------------------
+    
+    .ELSEIF eax == WM_COMMAND
+        
+
+    .ELSEIF eax == WM_KEYDOWN
+		invoke OnKeydown, hWin, eax, wParam, lParam
+		
+    .ELSEIF eax == WM_CLOSE
+    	invoke GetActiveWindow
+        Invoke EndDialog,eax, 0
+        
+    .ELSEIF eax == WM_DESTROY
+        ;Invoke PostQuitMessage,NULL
+        
+    .ELSE
+        Invoke DefWindowProc,hWin,uMsg,wParam,lParam
+        ret
+    .ENDIF
+    xor    eax,eax
+    ret
+
+    
+WndRankProc endp
+
 
 end start
