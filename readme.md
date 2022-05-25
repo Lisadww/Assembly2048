@@ -60,7 +60,7 @@
     * 用户名称的地址
     * 用户分数的地址
 ### 3. loadGame proto :dword
-* 功能：从数据库中加载用户游戏分数、历史最高分数（TODO忘写了）、游戏状态至num_score, num_best_score, BLOCK。
+* 功能：从数据库中加载用户游戏分数、历史最高分数、游戏状态至num_score, num_best_score, BLOCK。
 * 参数：
     * 用户名称的地址
 ### 4. updateBestByName proto :dword, :dword
