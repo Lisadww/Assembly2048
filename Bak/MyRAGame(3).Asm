@@ -908,18 +908,18 @@ OnScoreUpdate proc hWin:HWND
 	;mov @rrt.top, 50
 	
 	;set the text's color 
-    invoke SetTextColor, @hdc, 0F5F5F5h
-    invoke SetBkMode, @hdc, 00A9B3B8h
+    	invoke SetTextColor, @hdc, 0F5F5F5h
+    	invoke SetBkMode, @hdc, 00A9B3B8h
     
-    invoke crt_sprintf, addr text_score, addr sz_Num_to_text, num_score
-    invoke crt_strlen, addr text_score
-    mov text_score_len, eax
+    	invoke crt_sprintf, addr text_score, addr sz_Num_to_text, num_score
+    	invoke crt_strlen, addr text_score
+   	mov text_score_len, eax
     
 	invoke crt_sprintf, addr text_highest_score, addr sz_Num_to_text, num_highest_score
-    invoke crt_strlen, addr text_highest_score
-    mov text_highest_len, eax
+    	invoke crt_strlen, addr text_highest_score
+    	mov text_highest_len, eax
         
-    ret
+    	ret
 OnScoreUpdate endp
 
 ;-------------------------------------------------------------------------------------
@@ -959,9 +959,9 @@ OnKeydown endp
 ;-------------------------------------------------------------------------------------
 WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 
-    local @ps:PAINTSTRUCT
-    local @hdc:HDC
-    local @szBuff[100]:TCHAR
+    	local @ps:PAINTSTRUCT
+    	local @hdc:HDC
+    	local @szBuff[100]:TCHAR
 	local @rt:RECT
 	local @crText:COLORREF
 	local @dwLen:dword
@@ -1099,9 +1099,9 @@ WndProc endp
 WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 
 
-local @ps:PAINTSTRUCT
-    local @hdc:HDC
-    local @szBuff[100]:TCHAR
+	local @ps:PAINTSTRUCT
+    	local @hdc:HDC
+    	local @szBuff[100]:TCHAR
 	local @rt:RECT
 	local @crText:COLORREF
 	local @dwLen:dword
@@ -1238,17 +1238,8 @@ local @ps:PAINTSTRUCT
         add @rt.bottom, 50
         
         
-        
-        
         invoke FillRect, @hdc, addr @rt, @backgroundColor
         
-        ;invoke GetWindowDC, hWin
-        ;mov @hdc, eax
-          
-		;invoke OnDraw, hWin, @hdc
-		
-		;invoke TextOut, @hdc, x_num_score, y_num_score, addr text_score, text_score_len
-		;invoke TextOut, @hdc, x_num_highest, y_num_highest, addr text_highest_score, text_highest_len
 		
 	Invoke SetDlgItemText,hWin,IDC_RANK,offset sz_Text_Rank
     	Invoke SetDlgItemText,hWin,IDC_STC1,offset rank_info1

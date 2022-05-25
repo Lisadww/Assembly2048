@@ -25,20 +25,7 @@ include MyRAGame.inc
 printf      PROTO C :dword, :VARARG  ; for test
 
 
-sql_open  typedef proto :dword,:dword
-SQL_Open  typedef ptr   sql_open
 
-sql_close typedef proto :dword
-SQL_Close typedef ptr   sql_close
-
-callback  typedef proto :dword,:dword,:dword,:dword
-CallBack  typedef ptr   callback
-
-sql_exec  typedef proto :dword,:dword,:CallBack,:dword,:dword
-SQL_Exec  typedef ptr   sql_exec
-
-sql_slct  typedef proto :dword,:dword,:dword,:dword,:dword,:dword
-SQL_Slct  typedef ptr   sql_slct
 
 
 
@@ -1061,13 +1048,12 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             
         .ELSEIF eax == IDM_SAVE
             
-            invoke saveGame, offset BLOCK, offset user_name, offset test_score
+            invoke saveGame, offset BLOCK, offset user_name, offset num_score
             
         .ELSEIF eax == IDM_RANK
             
-		;Invoke WinRank, hInstance, NULL, NULL, SW_SHOWDEFAULT
 		invoke prepareRankInfo
-             ;invoke  MessageBox,NULL,offset rank_info1,offset dbname,MB_OK
+
 		invoke DialogBoxParam, hInstance, IDD_RANK, hWin, addr WndRankProc, NULL
 		
 		

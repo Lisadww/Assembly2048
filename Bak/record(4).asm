@@ -224,8 +224,8 @@ updateBestByName proc address_name:dword, address_score:dword
 	    	invoke hs_exec, hDB, offset sql, NULL, NULL, NULL
             
         .else
-       	    	mov ecx, address_score
-            	.if [ecx]>=eax
+       	    	mov ebx, address_score
+            	.if [ebx]>=eax
             	
             	invoke  RtlZeroMemory, offset sql, sizeof sql
             
@@ -253,7 +253,7 @@ updateBestByName proc address_name:dword, address_score:dword
 
 updateBestByName endp
 ;------------------------------------------------------------------------
-;getBestByName: return the best score and the error code from Players. if there is a record with name = NAME in Players, the error code = 0. Otherwise 1.
+;getBestByName: return the best score from Players if there is a record with name = NAME in Players. Otherwise return the error code 1.
 ;------------------------------------------------------------------------
 
 getBestByName      proc    address_name:dword
@@ -261,7 +261,7 @@ getBestByName      proc    address_name:dword
         local    @i,@j,@index
         LOCAL	@best:dword
         local @flag:dword
-        mov @best, 0  ; the error code 1
+        mov @best, 0  
         mov @flag, 0
         invoke  RtlZeroMemory, offset sql, sizeof sql
         invoke strcat, offset sql, offset sql_selectBestByName
@@ -295,7 +295,7 @@ getBestByName      proc    address_name:dword
         .endw
         ;invoke  MessageBox,NULL,offset szStr,offset fileName,MB_OK
         invoke  RtlZeroMemory, offset szStr, sizeof szStr
-              
+        
         mov eax, @best
         .if @flag == 1
         	mov ebx, 0

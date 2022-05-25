@@ -1142,13 +1142,6 @@ local @ps:PAINTSTRUCT
         
         invoke FillRect, @hdc, addr @rt, @backgroundColor
         
-        ;invoke GetWindowDC, hWin
-        ;mov @hdc, eax
-          
-		;invoke OnDraw, hWin, @hdc
-		
-		;invoke TextOut, @hdc, x_num_score, y_num_score, addr text_score, text_score_len
-		;invoke TextOut, @hdc, x_num_highest, y_num_highest, addr text_highest_score, text_highest_len
 		
         invoke EndPaint,hWin,addr @rt
         
@@ -1203,12 +1196,7 @@ local @ps:PAINTSTRUCT
     
     mov eax, uMsg
     .IF eax == WM_INITDIALOG
-   		Invoke SetDlgItemText,hWin,IDC_RANK,offset sz_Text_Rank
-    		Invoke SetDlgItemText,hWin,IDC_STC1,offset rank_info1
-		Invoke SetDlgItemText,hWin,IDC_STC2,offset rank_info2
-		Invoke SetDlgItemText,hWin,IDC_STC3,offset rank_info3
-		Invoke SetDlgItemText,hWin,IDC_STC4,offset rank_info4
-		Invoke SetDlgItemText,hWin,IDC_STC5,offset rank_info5
+   		
         ;push hWin
         ;pop hWnd
         

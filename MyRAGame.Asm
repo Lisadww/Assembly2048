@@ -18,29 +18,6 @@ option casemap:none
 ;ENDIF
 
 include MyRAGame.inc
-;include record1.asm
-;include record.inc
-
-
-printf      PROTO C :dword, :VARARG  ; for test
-
-
-sql_open  typedef proto :dword,:dword
-SQL_Open  typedef ptr   sql_open
-
-sql_close typedef proto :dword
-SQL_Close typedef ptr   sql_close
-
-callback  typedef proto :dword,:dword,:dword,:dword
-CallBack  typedef ptr   callback
-
-sql_exec  typedef proto :dword,:dword,:CallBack,:dword,:dword
-SQL_Exec  typedef ptr   sql_exec
-
-sql_slct  typedef proto :dword,:dword,:dword,:dword,:dword,:dword
-SQL_Slct  typedef ptr   sql_slct
-
-
 
 
 

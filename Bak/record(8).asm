@@ -146,7 +146,7 @@ hs_slct       SQL_Slct ?
 ;-------------------------------------------------------------------------------
 ;prepareRankInfo: prepare the rankinfo1-rankinfo5 
 ;-------------------------------------------------------------------------------
-prepareRankInfo proc uses eax ebx edi esi
+prepareRankInfo proc 
 
 
 local    @result,@nRow,@nCol
@@ -199,10 +199,10 @@ prepareRankInfo endp
 ;updateBestByName: [param1:the address of name; param2:the address of score]
 ;update the best score in Players where name = NAME.
 ;-------------------------------------------------------------------------------
-updateBestByName proc uses ebx ecx address_name:dword, address_score:dword
+updateBestByName proc uses eax ebx ecx address_name:dword, address_score:dword
 
 	invoke getBestByName, address_name
-	.if ebx == 1
+	.if ebx == 1 ; error
 	    	invoke  RtlZeroMemory, offset sql, sizeof sql
             	invoke strcat, offset sql, offset sql_insertNewPlayer
  	    	invoke strcat, offset sql, offset lq
@@ -225,7 +225,7 @@ updateBestByName proc uses ebx ecx address_name:dword, address_score:dword
             
         .else
        	    	mov ecx, address_score
-            	.if [ecx]>=ebx
+            	.if [ecx]>=eax
             	
             	invoke  RtlZeroMemory, offset sql, sizeof sql
             

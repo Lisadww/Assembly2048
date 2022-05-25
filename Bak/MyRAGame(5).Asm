@@ -1092,6 +1092,9 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 WndProc endp
 
 
+;-------------------------------------------------------------------------------------
+; WndUserNameProc
+;-------------------------------------------------------------------------------------
 
 WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 
@@ -1142,13 +1145,6 @@ local @ps:PAINTSTRUCT
         
         invoke FillRect, @hdc, addr @rt, @backgroundColor
         
-        ;invoke GetWindowDC, hWin
-        ;mov @hdc, eax
-          
-		;invoke OnDraw, hWin, @hdc
-		
-		;invoke TextOut, @hdc, x_num_score, y_num_score, addr text_score, text_score_len
-		;invoke TextOut, @hdc, x_num_highest, y_num_highest, addr text_highest_score, text_highest_len
 		
         invoke EndPaint,hWin,addr @rt
         
@@ -1188,7 +1184,9 @@ local @ps:PAINTSTRUCT
     
 WndUserNameProc endp
 
-
+;-------------------------------------------------------------------------------------
+; WndRankProc
+;-------------------------------------------------------------------------------------
 
 WndRankProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 

@@ -48,17 +48,7 @@ public createTable
 public prepareRankInfo
 
 
-public libName
-public hLib
-public hs_open
-public hs_close
-public hs_exec
-public hs_slct
-public hDB
-public sqlite3_open
-public sqlite3_close
-public sqlite3_exec
-public sqlite3_slct
+
 ;--------------------------------------------------
 ;SQLite相关函数指针定义
 ;--------------------------------------------------
@@ -251,9 +241,9 @@ updateBestByName proc address_name:dword, address_score:dword
 	ret
 
 updateBestByName endp
-;------------------------------------------------------------------------
-;getBestByName: return the best score from Players if there is a record with name = NAME in Players. Otherwise return the error code 1.
-;------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------------------------------
+;getBestByName: return the best score and error code from Players. if there is a record with name = NAME in Players, error code = 0. Otherwise return the error code 1.
+;------------------------------------------------------------------------------------------------------------------------
 
 getBestByName      proc    address_name:dword
         local    @result,@nRow,@nCol
@@ -460,6 +450,11 @@ loadGame proc address_name:dword
 	local    @result,@nRow,@nCol
               local    @i,@j,@index
               LOCAL	@iBlock:dword
+              
+              
+              ; first set num_best_score
+              invoke getBestByName, address_name
+              mov num_highest_score, eax
               
               invoke  RtlZeroMemory, offset sql, sizeof sql
             invoke strcat, offset sql, offset sql_selectByName

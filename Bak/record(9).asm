@@ -146,7 +146,7 @@ hs_slct       SQL_Slct ?
 ;-------------------------------------------------------------------------------
 ;prepareRankInfo: prepare the rankinfo1-rankinfo5 
 ;-------------------------------------------------------------------------------
-prepareRankInfo proc
+prepareRankInfo proc uses eax ebx edi esi
 
 
 local    @result,@nRow,@nCol
@@ -199,10 +199,10 @@ prepareRankInfo endp
 ;updateBestByName: [param1:the address of name; param2:the address of score]
 ;update the best score in Players where name = NAME.
 ;-------------------------------------------------------------------------------
-updateBestByName proc address_name:dword, address_score:dword
+updateBestByName proc uses eax ebx ecx address_name:dword, address_score:dword
 
 	invoke getBestByName, address_name
-	.if eax == 1
+	.if ebx == 1 ; error
 	    	invoke  RtlZeroMemory, offset sql, sizeof sql
             	invoke strcat, offset sql, offset sql_insertNewPlayer
  	    	invoke strcat, offset sql, offset lq
@@ -224,8 +224,8 @@ updateBestByName proc address_name:dword, address_score:dword
 	    	invoke hs_exec, hDB, offset sql, NULL, NULL, NULL
             
         .else
-       	    	mov ebx, address_score
-            	.if [ebx]>=eax
+       	    	mov ecx, address_score
+            	.if [ecx]>=eax
             	
             	invoke  RtlZeroMemory, offset sql, sizeof sql
             
@@ -253,10 +253,10 @@ updateBestByName proc address_name:dword, address_score:dword
 
 updateBestByName endp
 ;------------------------------------------------------------------------
-;getBestByName: return the best score from Players if there is a record with name = NAME in Players. Otherwise return the error code 1.
+;getBestByName: return the best score and the error code from Players. if there is a record with name = NAME in Players, the error code = 0. Otherwise 1.
 ;------------------------------------------------------------------------
 
-getBestByName      proc    address_name:dword
+getBestByName      proc    uses eax ebx edi esi address_name:dword
         local    @result,@nRow,@nCol
         local    @i,@j,@index
         LOCAL	@best:dword
@@ -296,10 +296,11 @@ getBestByName      proc    address_name:dword
         ;invoke  MessageBox,NULL,offset szStr,offset fileName,MB_OK
         invoke  RtlZeroMemory, offset szStr, sizeof szStr
               
+        mov eax, @best
         .if @flag == 1
-        	mov eax, @best
+        	mov ebx, 0
         .else
-                mov eax, 1
+                mov ebx, 1
         .endif
         ret
 getBestByName        endp
@@ -386,7 +387,7 @@ getNum:
 
 dword2str   endp
 
-saveGame    proc    address_states:dword, address_name:dword, address_score:dword
+saveGame    proc    uses ebx address_states:dword, address_name:dword, address_score:dword
             local @i:dword
             
             
@@ -455,7 +456,7 @@ saveGame    endp
 ;loadGame[param1:the address(dword) of name(byte) return 0 when no error occurs.]
 ;set the value of BLOCK, num_score.
 ;-------------------------------------------------------------------------------------------------------------
-loadGame proc address_name:dword
+loadGame proc uses eax ebx edi esi address_name:dword
 	;LOCAL    @str:byte
 	local    @result,@nRow,@nCol
               local    @i,@j,@index
@@ -540,7 +541,7 @@ loadGame proc address_name:dword
 	ret
 
 loadGame endp
-createTable proc
+createTable proc 
 	invoke   hs_open,offset fileName,offset hDB
 	
 	invoke   hs_exec,hDB,offset sql_createTable_Plays,NULL,NULL,NULL
@@ -550,7 +551,7 @@ createTable proc
 
 createTable endp
 
-initDataBase   proc
+initDataBase   proc uses eax
 
 
               invoke   LoadLibrary,offset libName

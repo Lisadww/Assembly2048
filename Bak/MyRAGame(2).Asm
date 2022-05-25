@@ -908,18 +908,18 @@ OnScoreUpdate proc hWin:HWND
 	;mov @rrt.top, 50
 	
 	;set the text's color 
-    invoke SetTextColor, @hdc, 0F5F5F5h
-    invoke SetBkMode, @hdc, 00A9B3B8h
+    	invoke SetTextColor, @hdc, 0F5F5F5h
+    	invoke SetBkMode, @hdc, 00A9B3B8h
     
-    invoke crt_sprintf, addr text_score, addr sz_Num_to_text, num_score
-    invoke crt_strlen, addr text_score
-    mov text_score_len, eax
+    	invoke crt_sprintf, addr text_score, addr sz_Num_to_text, num_score
+    	invoke crt_strlen, addr text_score
+   	mov text_score_len, eax
     
 	invoke crt_sprintf, addr text_highest_score, addr sz_Num_to_text, num_highest_score
-    invoke crt_strlen, addr text_highest_score
-    mov text_highest_len, eax
+    	invoke crt_strlen, addr text_highest_score
+    	mov text_highest_len, eax
         
-    ret
+    	ret
 OnScoreUpdate endp
 
 ;-------------------------------------------------------------------------------------
@@ -959,9 +959,9 @@ OnKeydown endp
 ;-------------------------------------------------------------------------------------
 WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 
-    local @ps:PAINTSTRUCT
-    local @hdc:HDC
-    local @szBuff[100]:TCHAR
+    	local @ps:PAINTSTRUCT
+    	local @hdc:HDC
+    	local @szBuff[100]:TCHAR
 	local @rt:RECT
 	local @crText:COLORREF
 	local @dwLen:dword
@@ -1061,13 +1061,12 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             
         .ELSEIF eax == IDM_SAVE
             
-            invoke saveGame, offset BLOCK, offset user_name, offset test_score
+            invoke saveGame, offset BLOCK, offset user_name, offset num_score
             
         .ELSEIF eax == IDM_RANK
             
-		;Invoke WinRank, hInstance, NULL, NULL, SW_SHOWDEFAULT
 		invoke prepareRankInfo
-             ;invoke  MessageBox,NULL,offset rank_info1,offset dbname,MB_OK
+
 		invoke DialogBoxParam, hInstance, IDD_RANK, hWin, addr WndRankProc, NULL
 		
 		
@@ -1099,9 +1098,9 @@ WndProc endp
 WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 
 
-local @ps:PAINTSTRUCT
-    local @hdc:HDC
-    local @szBuff[100]:TCHAR
+	local @ps:PAINTSTRUCT
+    	local @hdc:HDC
+    	local @szBuff[100]:TCHAR
 	local @rt:RECT
 	local @crText:COLORREF
 	local @dwLen:dword

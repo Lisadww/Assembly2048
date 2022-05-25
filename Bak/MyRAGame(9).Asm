@@ -1203,7 +1203,7 @@ local @ps:PAINTSTRUCT
     
     mov eax, uMsg
     .IF eax == WM_INITDIALOG
-   
+   		Invoke SetDlgItemText,hWin,IDC_RANK,offset sz_Text_Rank
     		Invoke SetDlgItemText,hWin,IDC_STC1,offset rank_info1
 		Invoke SetDlgItemText,hWin,IDC_STC2,offset rank_info2
 		Invoke SetDlgItemText,hWin,IDC_STC3,offset rank_info3
@@ -1228,11 +1228,7 @@ local @ps:PAINTSTRUCT
         ret
 
     .ELSEIF eax == WM_PAINT
-    	Invoke SetDlgItemText,hWin,IDC_STC1,offset rank_info1
-	Invoke SetDlgItemText,hWin,IDC_STC2,offset rank_info2
-	Invoke SetDlgItemText,hWin,IDC_STC3,offset rank_info3
-	Invoke SetDlgItemText,hWin,IDC_STC4,offset rank_info4
-	Invoke SetDlgItemText,hWin,IDC_STC5,offset rank_info5
+    	
         
         ;Draw background
         invoke GetClientRect, hWin, addr @rt  ; get the coordinate of the window
@@ -1248,6 +1244,12 @@ local @ps:PAINTSTRUCT
         mov @rt.top, 50
         add @rt.bottom, 50
         
+        Invoke SetDlgItemText,hWin,IDC_RANK,offset sz_Text_Rank
+    	Invoke SetDlgItemText,hWin,IDC_STC1,offset rank_info1
+	Invoke SetDlgItemText,hWin,IDC_STC2,offset rank_info2
+	Invoke SetDlgItemText,hWin,IDC_STC3,offset rank_info3
+	Invoke SetDlgItemText,hWin,IDC_STC4,offset rank_info4
+	Invoke SetDlgItemText,hWin,IDC_STC5,offset rank_info5
         
         
         invoke FillRect, @hdc, addr @rt, @backgroundColor
