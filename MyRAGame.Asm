@@ -19,7 +19,10 @@ option casemap:none
 
 include MyRAGame.inc
 
-
+.data
+sztest db 'test', 0
+szSave	db	'Save successfully!', 0
+szSaveTitle	db	'Save', 0
 
 .code
 
@@ -664,37 +667,39 @@ OnBlockInit proc uses edx ecx
 	
 	invoke OnBlockReset, @hdc
 	
-    invoke GetOneRandBlock
-    mov edx,temp_block_num
-	.if block_value == 0
-		mov BLOCK[edx*4],2
-		invoke LoadIcon, @hdc, NUM_BLOCK_2
-		mov hIconTemp, eax	
-	.elseif block_value == 1
-		mov BLOCK[edx*4],4
-		invoke LoadIcon, @hdc, NUM_BLOCK_4
-		mov hIconTemp, eax	
-	.endif
-	invoke DetermineBlockHandle
+;    invoke GetOneRandBlock
+;    mov edx,temp_block_num
+;	.if block_value == 0
+;		mov BLOCK[edx*4],2
+;		invoke LoadIcon, @hdc, NUM_BLOCK_2
+;		mov hIconTemp, eax	
+;	.elseif block_value == 1
+;		mov BLOCK[edx*4],4
+;		invoke LoadIcon, @hdc, NUM_BLOCK_4
+;		mov hIconTemp, eax	
+;	.endif
+;	invoke DetermineBlockHandle
+    invoke PlaceOneRandBlock
     
     invoke Sleep, 10
     
-    invoke GetOneRandBlock
-    mov edx, temp_block_num
-    .while BLOCK[edx*4] != 0
-		invoke GetOneRandBlock
-		mov edx, temp_block_num
-	.endw
-    .if block_value == 0
-		mov BLOCK[edx*4],2
-		invoke LoadIcon, @hdc, NUM_BLOCK_2
-		mov hIconTemp, eax	
-	.elseif block_value == 1
-		mov BLOCK[edx*4],4
-		invoke LoadIcon, @hdc, NUM_BLOCK_4
-		mov hIconTemp, eax	
-	.endif
-	invoke DetermineBlockHandle
+    invoke PlaceOneRandBlock
+;    invoke GetOneRandBlock
+;    mov edx, temp_block_num
+;    .while BLOCK[edx*4] != 0
+;		invoke GetOneRandBlock
+;		mov edx, temp_block_num
+;	.endw
+;    .if block_value == 0
+;		mov BLOCK[edx*4],2
+;		invoke LoadIcon, @hdc, NUM_BLOCK_2
+;		mov hIconTemp, eax	
+;	.elseif block_value == 1
+;		mov BLOCK[edx*4],4
+;		invoke LoadIcon, @hdc, NUM_BLOCK_4
+;		mov hIconTemp, eax	
+;	.endif
+;	invoke DetermineBlockHandle
 
         
     ret
@@ -900,26 +905,133 @@ OnScoreUpdate proc hWin:HWND
 OnScoreUpdate endp
 
 ;-------------------------------------------------------------------------------------
+; PlaceOneRandBlock - Handling keystroke messages
+;-------------------------------------------------------------------------------------
+PlaceOneRandBlock proc
+	local @hdc:HDC
+	invoke GetModuleHandle, NULL
+	mov @hdc, eax
+	invoke GetOneRandBlock
+	mov edx, temp_block_num
+    .while BLOCK[edx*4] != 0
+		invoke GetOneRandBlock
+		mov edx, temp_block_num
+	.endw
+	mov edx,temp_block_num
+	.if block_value == 0
+		mov BLOCK[edx*4],2
+		invoke LoadIcon, @hdc, NUM_BLOCK_2
+		mov hIconTemp, eax	
+	.elseif block_value == 1
+		mov BLOCK[edx*4],4
+		invoke LoadIcon, @hdc, NUM_BLOCK_4
+		mov hIconTemp, eax	
+	.endif
+	invoke DetermineBlockHandle
+    
+	ret
+
+PlaceOneRandBlock endp
+
+;-------------------------------------------------------------------------------------
 ; OnKeydown - Handling keystroke messages
 ;-------------------------------------------------------------------------------------
 OnKeydown proc hWin:HWND, message:UINT, wParam:WPARAM, lParam:LPARAM
+	local @hdc:HDC
+	LOCAL @i:DWORD
 	
-	mov eax, wParam
+
+	mov @i, 0
+    .while @i < 16
+        mov eax, @i
+        push BLOCK[eax*4]
+        pop OldBlock[eax*4]
+        inc @i
+    .endw	
+    
+    mov eax, wParam
     .if eax == VK_LEFT
-        ;invoke Left
-        
+        ;invoke Left       
+        invoke MergerLeft
+	invoke OnBlockUpdate
+;       Invoke SendMessage,hWin,WM_PAINT,0,0
+;        .while @i<16
+;        	mov ebx, @i
+;        	invoke  MessageBox,NULL,BLOCK[ebx],offset sz_Text_Highest,MB_OK
+;        inc @i
+;        .endw
     .elseif eax== VK_RIGHT
         ;invoke Right
-        
+        invoke MergerRight
+        invoke OnBlockUpdate
+        ;invoke  MessageBox,NULL,offset sz_Text_Win,offset sz_Text_Highest,MB_OK
     .elseif eax== VK_DOWN
         ;invoke Down
-        
+        invoke MergerDown
+        invoke OnBlockUpdate
+        ;invoke  MessageBox,NULL,offset sz_Text_Win,offset sz_Text_Highest,MB_OK
     .elseif eax== VK_UP
         ;invoke Up
+        invoke MergerUp
+        invoke OnBlockUpdate
+        ;invoke  MessageBox,NULL,offset sz_Text_Win,offset sz_Text_Highest,MB_OK
         
     .elseif eax == VK_SPACE
         ;invoke RestartGame    
     .endif
+    
+    mov @i, 0
+    mov flag, 0 
+    .while @i < 16
+        mov eax, @i  
+        mov ebx, BLOCK[eax*4]    
+        .if ebx != OldBlock[eax*4]
+        	mov flag, 1
+        .endif
+        inc @i
+    .endw
+    
+    mov win_flag, 0
+    mov lose_flag, 0
+    
+    
+    .if flag == 1
+    	invoke getscore
+    	invoke PlaceOneRandBlock
+    	
+    	
+
+	
+	invoke OnBlockUpdate
+    	invoke OnScoreUpdate, hWin
+    	
+
+    .endif
+    
+    invoke gameEnd
+    Invoke SendMessage,hWin,WM_PAINT,0,0
+    .if win_flag == 1
+    		invoke  messageBox,offset sz_Text_Win,offset sz_Text_Highest
+
+    		invoke prepareRankInfo
+		invoke DialogBoxParam, hInstance, IDD_RANK, hWin, addr WndRankProc, NULL	
+		invoke SetForegroundWindow, hWin
+    	.elseif lose_flag == 1
+    		invoke  messageBox,offset sz_Text_Lose,offset sz_Text_Highest
+    		invoke prepareRankInfo
+		invoke DialogBoxParam, hInstance, IDD_RANK, hWin, addr WndRankProc, NULL	
+		invoke SetForegroundWindow, hWin
+    	.endif
+    
+    
+    
+    invoke SetForegroundWindow, hWin
+    
+    
+;    invoke GetWindowDC, hWin
+;	mov @hdc, eax  
+;    invoke OnBlockReset,@hdc
+;    invoke loadGame, offset user_name
     
     ;invoke InvalidateRect, hWnd, addr @rc, TRUE ;redraw
     
@@ -929,6 +1041,352 @@ P_EXIT:
 	ret
 
 OnKeydown endp
+
+IsMerge proc
+    local @i:dword
+    local @j:dword
+    local @iOffset:dword
+    LOCAL @blockij:dword
+    LOCAL @blockijj:dword
+    
+    mov @i, 0
+    .while @i<4
+        ;@iOffset = i*4
+		xor edx, edx
+		mov eax, @i
+		mov ebx, 4
+		mul ebx
+		mov @iOffset, eax
+
+        mov @j, 0
+        .while @j < 3
+            ;eax = @iOffset + @j 
+        	mov eax, @iOffset
+        	add eax, @j
+        	mov @blockij, eax        	
+        	
+        	;eax = @iOffset + @j + 1
+        	mov eax, @iOffset
+        	add eax, @j
+        	add eax, 1
+        	mov @blockijj, eax
+        	
+        	
+            mov eax, @blockij
+            mov ebx, @blockijj
+            mov ecx, BLOCK[eax*4]
+            mov edx, BLOCK[ebx*4]
+            .if ecx == edx
+                mov merge_flag, 1
+            .endif
+            inc @j
+        .endw
+        inc @i
+    .endw
+    ret
+IsMerge endp
+
+
+
+gameEnd proc
+    local @i:dword
+    mov zero_flag, 0
+    mov lose_flag, 0
+    mov win_flag,0
+    mov @i, 0  ; TS
+    .while @i<16
+        mov eax, @i
+        .if BLOCK[eax*4] == 2048
+            mov win_flag, 1
+        .endif
+        inc @i
+    .endw
+    mov @i, 0  ; TS
+    .if win_flag == 0
+	    .while @i<16
+	        mov eax, @i
+	        .if BLOCK[eax*4] == 0
+	            mov zero_flag, 1
+	        .endif
+	        inc @i
+	    .endw
+	    mov merge_flag, 0
+	    .if zero_flag == 0
+	        invoke IsMerge
+	
+	        invoke RotateMatrix   
+	        invoke RotateMatrix
+	        invoke RotateMatrix
+	        invoke IsMerge
+	        invoke RotateMatrix
+	    .endif
+	    .if zero_flag == 0 && merge_flag == 0
+	        mov lose_flag, 1
+	    .endif
+    
+    .endif  
+    ret
+gameEnd endp
+
+;-------------------------------------------------------------------------------------
+; getscore - get the game score 
+;-------------------------------------------------------------------------------------
+getscore proc
+ 
+ push ecx
+ push edx
+ 
+ mov ecx,0
+ xor eax,eax
+ mov num_score,0
+ 
+cul_score:
+ mov edx,BLOCK[ecx*4]
+ mov eax,num_score
+ .if edx==0
+ .elseif edx==2
+  
+ .elseif edx==4
+  add eax,4
+ .elseif edx==8
+  add eax,16
+ .elseif edx==16
+  add eax,48
+ .elseif edx==32
+  add eax,128
+ .elseif edx==64
+  add eax,320
+ .elseif edx==128
+  add eax,768
+ .elseif edx==256
+  add eax,1792
+ .elseif edx==512
+  add eax,4096
+ .elseif edx==1024
+  add eax,9216
+ .elseif edx==2048
+  add eax,20480
+ .else
+  add eax,45036
+ .endif
+ mov num_score,eax
+ inc ecx
+ cmp ecx,16
+ jb cul_score
+ 
+ ;gameIsWin
+ pop edx
+ pop ecx
+ 
+ ret
+
+getscore endp
+
+;-------------------------------------------------------------------------------------
+; Compact - put all block number on the left side 
+;-------------------------------------------------------------------------------------
+Compact proc  row:dword
+	LOCAL @i:dword
+	LOCAL @j:dword
+	LOCAL @Blockij:dword
+	LOCAL @RowOffset:dword
+	mov @i, 0
+	mov @j, 0
+	;@RowOffset = row*4
+	xor edx, edx
+	mov eax, row
+	mov ebx, 4
+	mul ebx
+	mov @RowOffset, eax
+	
+	.while @i<4
+		;eax = @RowOffset + @i		
+		mov eax, @RowOffset
+		add eax, @i
+		push BLOCK[eax*4] ;[row][i]
+		pop @Blockij	
+		
+		
+		.if @Blockij != 0
+			push @Blockij
+			;eax = @RowOffset + @j	
+			mov eax, @RowOffset
+			add eax, @j
+			pop BLOCK[eax*4];[row][j]=[row][i]
+			inc @j
+		.endif
+		inc @i
+	.endw
+	
+	.while @j<4
+		mov eax, @RowOffset
+		add eax, @j
+		mov BLOCK[eax*4], 0 ;[row][j]=0
+		inc @j
+	.endw
+	
+	ret
+	
+Compact endp
+
+;-------------------------------------------------------------------------------------
+; MergerLeft - merge the same block leftward 
+;-------------------------------------------------------------------------------------
+MergerLeft proc uses eax ebx edx
+    Local @i:dword
+    Local @j:dword
+    LOCAL @blockij:dword
+    LOCAL @blockijj:dword
+    LOCAL @iOffset:dword
+    mov @i, 0
+    .while @i < 4
+        ;mov row, @i
+        invoke Compact, @i
+        ;@iOffset = i*4
+		xor edx, edx
+		mov eax, @i
+		mov ebx, 4
+		mul ebx
+		mov @iOffset, eax
+		
+        mov @j, 0
+        .while @j < 3
+        	;eax = @iOffset + @j 
+        	mov eax, @iOffset
+        	add eax, @j
+        	mov @blockij, eax
+        	
+        	
+        	;eax = @iOffset + @j + 1
+        	mov eax, @iOffset
+        	add eax, @j
+        	add eax, 1
+        	mov @blockijj, eax
+        	
+        	
+            mov eax, @blockij
+            mov ebx, @blockijj
+            mov ecx, BLOCK[eax*4]
+            mov edx, BLOCK[ebx*4]
+            .if ecx == edx
+            	mov eax, @blockij
+            	mov ebx, @blockijj
+                mov edx, BLOCK[eax*4]
+                shl edx, 1
+                mov BLOCK[eax*4], edx
+                mov BLOCK[ebx*4], 0
+                invoke Compact, @i
+            .endif         
+            inc @j
+        .endw
+        inc @i
+    .endw
+
+	ret
+
+MergerLeft endp
+
+;-------------------------------------------------------------------------------------
+; RotateMatrix - rotate the block matrix
+;-------------------------------------------------------------------------------------
+RotateMatrix proc uses eax
+
+    Local @i:dword
+    mov @i,0
+    .while @i<16
+    	mov eax, @i
+        mov temp[eax*4], 0
+        inc @i
+    .endw
+    mov @i, 0
+    .while @i < 16
+        mov eax, @i
+        push BLOCK[eax*4]
+        pop temp[eax*4]
+        inc @i
+    .endw
+    
+    ;0  1  2  3           12  8  4  0
+    ;4  5  6  7      ->   13  9  5  1
+    ;8  9  10 11          14  10 6  2
+    ;12 13 14 15          15  11 7  3
+    
+    push temp[12*4]
+    pop BLOCK[0*4]
+    push temp[8*4]
+    pop BLOCK[1*4]
+    push temp[4*4]
+    pop BLOCK[2*4]
+    push temp[0*4]
+    pop BLOCK[3*4]
+    push temp[13*4]
+    pop BLOCK[4*4]
+    push temp[9*4]
+    pop BLOCK[5*4]
+    push temp[5*4]
+    pop BLOCK[6*4]
+    push temp[1*4]
+    pop BLOCK[7*4]
+    push temp[14*4]
+    pop BLOCK[8*4]
+    push temp[10*4]
+    pop BLOCK[9*4]
+    push temp[6*4]
+    pop BLOCK[10*4]
+    push temp[2*4]
+    pop BLOCK[11*4]
+    push temp[15*4]
+    pop BLOCK[12*4]
+    push temp[11*4]
+    pop BLOCK[13*4]
+    push temp[7*4]
+    pop BLOCK[14*4]
+    push temp[3*4]
+    pop BLOCK[15*4]
+    
+		
+	ret
+
+RotateMatrix endp
+
+;-------------------------------------------------------------------------------------
+; MergerRight - merge the same block rightward
+;-------------------------------------------------------------------------------------
+MergerRight proc 
+    invoke RotateMatrix
+    invoke RotateMatrix
+    invoke MergerLeft
+    invoke RotateMatrix
+    invoke RotateMatrix
+
+    ret
+MergerRight endp
+
+;-------------------------------------------------------------------------------------
+; MergerUp - merge the same block upward
+;-------------------------------------------------------------------------------------
+MergerUp proc 
+    invoke RotateMatrix   
+    invoke RotateMatrix
+    invoke RotateMatrix
+    invoke MergerLeft
+    invoke RotateMatrix
+
+    ret
+MergerUp endp
+
+;-------------------------------------------------------------------------------------
+; MergerDown - merge the same block downward
+;-------------------------------------------------------------------------------------
+MergerDown proc 
+    invoke RotateMatrix 
+    invoke MergerLeft  
+    invoke RotateMatrix
+    invoke RotateMatrix
+    invoke RotateMatrix
+
+    ret
+MergerDown endp
 
 
 ;-------------------------------------------------------------------------------------
@@ -1010,6 +1468,7 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             
         .ELSEIF eax == IDM_NAME
             invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
+            invoke SetForegroundWindow, hWin
         
         .ELSEIF eax == IDM_NEW_GAME
             invoke GetWindowDC, hWin
@@ -1020,25 +1479,44 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             Invoke SendMessage,hWin,WM_PAINT,0,0
             
         .ELSEIF eax == IDM_OPEN
-            ;TODO
+            
             
             ;*****************************
             ; update block's show example
             ;*****************************
-            invoke GetWindowDC, hWin
+            
+            ; check name != empty first
+            .if user_name == 0
+            	invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
+            	invoke SetForegroundWindow, hWin
+            	
+            .else
+            
+            	invoke GetWindowDC, hWin
         	mov @hdc, eax  
-            invoke OnBlockReset,@hdc
-            invoke loadGame, offset user_name
+            	invoke OnBlockReset,@hdc
+            	invoke loadGame, offset user_name
+            	.if eax == 1  ; new user
+            		invoke messageBox, offset sz_Text_NewUser, offset sz_Title_NewUser
+            	.else
+            		invoke OnScoreUpdate, hWin
+            		invoke OnBlockUpdate
+            		Invoke SendMessage,hWin,WM_PAINT,0,0
+            	.endif
             
-            ;invoke printf, offset BLOCK
             
-            invoke OnScoreUpdate, hWin
-            invoke OnBlockUpdate
-            Invoke SendMessage,hWin,WM_PAINT,0,0
+            	
+            	
+            .endif
             
         .ELSEIF eax == IDM_SAVE
+            .if user_name == 0
+            	invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
+            	invoke SetForegroundWindow, hWin
+            .else
+            	invoke saveGame, offset BLOCK, offset user_name, offset num_score
+            .endif
             
-            invoke saveGame, offset BLOCK, offset user_name, offset num_score
             
         .ELSEIF eax == IDM_RANK
             
@@ -1046,12 +1524,13 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 
 		invoke DialogBoxParam, hInstance, IDD_RANK, hWin, addr WndRankProc, NULL
 		
-		
+		invoke SetForegroundWindow, hWin
             
         .ENDIF
 
 	.ELSEIF eax == WM_KEYDOWN
 		invoke OnKeydown, hWin, eax, wParam, lParam
+		Invoke SendMessage,hWin,WM_PAINT,0,0
 		
     .ELSEIF eax == WM_CLOSE
         Invoke DestroyWindow,hWin
@@ -1085,6 +1564,7 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
     
     mov eax, uMsg
     .IF eax == WM_INITDIALOG
+    	Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
         ;push hWin
         ;pop hWnd
         
@@ -1120,6 +1600,8 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         add @rt.bottom, 50
         
         invoke FillRect, @hdc, addr @rt, @backgroundColor
+        
+        Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
         
 		
         invoke EndPaint,hWin,addr @rt

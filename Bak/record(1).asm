@@ -29,6 +29,7 @@ createTable proto
 updateBestByName proto :dword, :dword
 dword2str proto :dword, :dword
 str2dword proto :dword, :dword
+messageBox proto :dword, :dword
 
 
 extern BLOCK:dword
@@ -46,6 +47,7 @@ public loadGame
 public initDataBase
 public createTable
 public prepareRankInfo
+public messageBox
 
 
 
@@ -98,11 +100,13 @@ empty         db       0
 pad	db	5 dup(' '),0
 
 
+szSave	db	'Save successfully!', 0
+szSaveTitle	db	'Save', 0
 
 ;for debug
-states  dword   2,16,0,0,16,0,0,0,2,4,8,16,32,1024,2048,0
-sscore   dword   4096
-sname    db    'Luna', 0
+;states  dword   2,16,0,0,16,0,0,0,2,4,8,16,32,1024,2048,0
+;sscore   dword   4096
+;sname    db    'Luna', 0
 
 ;---------------------
 lq  db  '(', 0
@@ -132,6 +136,16 @@ hs_slct       SQL_Slct ?
 
 
 .code
+
+messageBox proc address_content:dword, address_title:dword
+	
+	invoke MessageBox,NULL, address_content, address_title, MB_OK	
+	
+	ret
+
+messageBox endp
+
+
 ;-------------------------------------------------------------------------------
 ;prepareRankInfo: prepare the rankinfo1-rankinfo5 
 ;-------------------------------------------------------------------------------
@@ -382,6 +396,8 @@ saveGame    proc    address_states:dword, address_name:dword, address_score:dwor
             
             invoke   hs_open,offset fileName,offset hDB
             
+            
+            
             invoke  RtlZeroMemory, offset sql, sizeof sql
             invoke strcat, offset sql, offset sql_deleteByName  ; delete first. TODO: more save_file?
 
@@ -437,6 +453,8 @@ writeStates:
 
 
             invoke updateBestByName, address_name, address_score
+            
+            invoke  MessageBox,NULL,offset szSave,offset szSaveTitle,MB_OK
 
             ret
 saveGame    endp
@@ -451,10 +469,13 @@ loadGame proc address_name:dword
               local    @i,@j,@index
               LOCAL	@iBlock:dword
               
+              invoke  RtlZeroMemory, offset num_highest_score, sizeof num_highest_score
+              invoke  RtlZeroMemory, offset num_score, sizeof num_score
+              
               
               ; first set num_best_score
               invoke getBestByName, address_name
-              mov num_best_score, eax
+              mov num_highest_score, eax
               
               invoke  RtlZeroMemory, offset sql, sizeof sql
             invoke strcat, offset sql, offset sql_selectByName
@@ -506,11 +527,8 @@ loadGame proc address_name:dword
                                 add ecx, eax
                                 pop eax
                               	invoke str2dword, offset szStr, ecx
-                              	;invoke  MessageBox,NULL,offset szStr,offset fileName,MB_OK
                               	
                               .endif
-                              ;invoke  strcat,offset szStr,[ebx + edi*4]
-                              ;invoke  strcat,offset szStr,offset endline
 
                               inc     esi
                               inc     edi

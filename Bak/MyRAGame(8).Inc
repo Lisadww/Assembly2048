@@ -30,6 +30,7 @@ WndRankProc		PROTO :DWORD,:DWORD,:DWORD,:DWORD
 OnBlockReset            PROTO :HDC
 OnDraw					PROTO :HWND,:HDC
 GetOneRandBlock         PROTO
+PlaceOneRandBlock		PROTO
 OnBlockInit				PROTO 
 OnBlockUpdate			PROTO 
 ChangeBlockResource		PROTO :DWORD
@@ -38,14 +39,30 @@ OnScoreUpdate			PROTO :HWND
 OnKeydown				PROTO :HWND,:UINT,:WPARAM,:LPARAM
 MessageBoxW			PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
+;hy
+MergerLeft 				PROTO
+MergerRight 			PROTO
+MergerUp 				PROTO
+MergerDown 				PROTO
+Compact 				PROTO :DWORD 
+RotateMatrix			PROTO 
 
 initDataBase proto
 saveGame proto :dword, :dword, :dword
 loadGame proto :dword
 getScore proto :dword
 createTable proto
+prepareRankInfo proto
 
 public BLOCK
+public num_score
+public num_highest_score
+
+public rank_info1
+public rank_info2
+public rank_info3
+public rank_info4
+public rank_info5
 
 .CONST
 ;-----------------------------------------------------------------------------------------
@@ -136,6 +153,7 @@ sz_Text_Highest			DB 'Highest',0
 sz_Text_Win				DB 'Congratulations For 2048 Generated!',0
 sz_Text_Lose			DB 'You have lost... Try to start again.',0
 sz_Text_Result_Reset	DB 'CongratulationssFors2048sGenerated!s',0
+sz_Text_Rank	db	'Ranking List', 0
 
 
 sz_Test					DB '%d',0
@@ -151,11 +169,11 @@ num_score				DD 0
 num_highest_score		DD 0
 
 BLOCK  					DD 16 DUP(0)
+temp 					DD 16 DUP(0) ;hy
 
 temp_block_num			DD 0
 
-;TS
-test_score	dd 20
+
 
 .DATA?
 ;-----------------------------------------------------------------------------------------
@@ -210,6 +228,13 @@ block_value  			DD ?
 
 ;TS
 user_name	db 16 dup(?)
+
+rank_info1	db 48 dup(?)
+rank_info2	db 48 dup(?)
+rank_info3	db 48 dup(?)
+rank_info4	db 48 dup(?)
+rank_info5	db 48 dup(?)
+
 
 
 

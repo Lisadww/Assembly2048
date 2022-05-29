@@ -24,6 +24,8 @@ WinMain                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
 WndProc                 PROTO :DWORD,:DWORD,:DWORD,:DWORD
 WinUserName		PROTO :DWORD,:DWORD,:DWORD,:DWORD
 WndUserNameProc		PROTO :DWORD,:DWORD,:DWORD,:DWORD
+WinRank		PROTO :DWORD,:DWORD,:DWORD,:DWORD
+WndRankProc		PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
 OnBlockReset            PROTO :HDC
 OnDraw					PROTO :HWND,:HDC
@@ -36,14 +38,30 @@ OnScoreUpdate			PROTO :HWND
 OnKeydown				PROTO :HWND,:UINT,:WPARAM,:LPARAM
 MessageBoxW			PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
+;hy
+MergerLeft 				PROTO
+MergerRight 			PROTO
+MergerUp 				PROTO
+MergerDown 				PROTO
+Compact 				PROTO :DWORD 
+RotateMatrix			PROTO 
 
 initDataBase proto
 saveGame proto :dword, :dword, :dword
 loadGame proto :dword
 getScore proto :dword
 createTable proto
+prepareRankInfo proto
 
 public BLOCK
+public num_score
+public num_highest_score
+
+public rank_info1
+public rank_info2
+public rank_info3
+public rank_info4
+public rank_info5
 
 .CONST
 ;-----------------------------------------------------------------------------------------
@@ -81,7 +99,13 @@ IDC_OK	EQU 2001
 IDC_NAME	EQU 2002
 
 ;RANK LIST Dialog
-
+IDD_RANK	EQU	3000
+IDC_RANK	EQU	3001
+IDC_STC1	EQU	3002
+IDC_STC2	EQU	3003
+IDC_STC3	EQU	3004
+IDC_STC4	EQU	3005
+IDC_STC5	EQU	3006
 
 ; Main Menu 
 IDM_MENU                EQU 10000
@@ -128,6 +152,7 @@ sz_Text_Highest			DB 'Highest',0
 sz_Text_Win				DB 'Congratulations For 2048 Generated!',0
 sz_Text_Lose			DB 'You have lost... Try to start again.',0
 sz_Text_Result_Reset	DB 'CongratulationssFors2048sGenerated!s',0
+sz_Text_Rank	db	'Ranking List', 0
 
 
 sz_Test					DB '%d',0
@@ -143,11 +168,11 @@ num_score				DD 0
 num_highest_score		DD 0
 
 BLOCK  					DD 16 DUP(0)
+temp 					DD 16 DUP(0) ;hy
 
 temp_block_num			DD 0
 
-;TS
-test_score	dd 20
+
 
 .DATA?
 ;-----------------------------------------------------------------------------------------
@@ -202,6 +227,13 @@ block_value  			DD ?
 
 ;TS
 user_name	db 16 dup(?)
+
+rank_info1	db 48 dup(?)
+rank_info2	db 48 dup(?)
+rank_info3	db 48 dup(?)
+rank_info4	db 48 dup(?)
+rank_info5	db 48 dup(?)
+
 
 
 

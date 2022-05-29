@@ -30,6 +30,7 @@ WndRankProc		PROTO :DWORD,:DWORD,:DWORD,:DWORD
 OnBlockReset            PROTO :HDC
 OnDraw					PROTO :HWND,:HDC
 GetOneRandBlock         PROTO
+PlaceOneRandBlock		PROTO
 OnBlockInit				PROTO 
 OnBlockUpdate			PROTO 
 ChangeBlockResource		PROTO :DWORD
@@ -38,6 +39,18 @@ OnScoreUpdate			PROTO :HWND
 OnKeydown				PROTO :HWND,:UINT,:WPARAM,:LPARAM
 MessageBoxW			PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
+;hy
+MergerLeft 				PROTO
+MergerRight 			PROTO
+MergerUp 				PROTO
+MergerDown 				PROTO
+Compact 				PROTO :DWORD 
+RotateMatrix			PROTO 
+
+;zkn
+getscore                PROTO
+IsMerge					PROTO
+gameEnd					PROTO
 
 initDataBase proto
 saveGame proto :dword, :dword, :dword
@@ -47,6 +60,9 @@ createTable proto
 prepareRankInfo proto
 
 public BLOCK
+public num_score
+public num_highest_score
+
 public rank_info1
 public rank_info2
 public rank_info3
@@ -130,7 +146,7 @@ GAME_BOX_WIDTH        EQU 85
 ;-----------------------------------------------------------------------------------------
 
 
-;TS
+
 dbname      db       'data.db',0  
 ClassName               DB 'DLGCLASS',0
 AppName                 DB 'MyRAGame',0
@@ -141,8 +157,10 @@ sz_Text_Score			DB 'Score',0
 sz_Text_Highest			DB 'Highest',0
 sz_Text_Win				DB 'Congratulations For 2048 Generated!',0
 sz_Text_Lose			DB 'You have lost... Try to start again.',0
-sz_Text_Result_Reset	DB 'CongratulationssFors2048sGenerated!s',0
+sz_Text_Result_Reset	DB 'Congratulations For 2048 Generated!',0
 sz_Text_Rank	db	'Ranking List', 0
+sz_test	db 'test', 0
+
 
 
 sz_Test					DB '%d',0
@@ -158,11 +176,18 @@ num_score				DD 0
 num_highest_score		DD 0
 
 BLOCK  					DD 16 DUP(0)
+;hy
+temp 					DD 16 DUP(0) 
+flag               		DD 0 
+OldBlock  				DD 16 DUP(0)
+merge_flag				DD 0
+zero_flag               DD 0
+lose_flag				DD 0
+win_flag				DD 0
 
 temp_block_num			DD 0
 
-;TS
-test_score	dd 1000
+
 
 .DATA?
 ;-----------------------------------------------------------------------------------------
@@ -223,6 +248,7 @@ rank_info2	db 48 dup(?)
 rank_info3	db 48 dup(?)
 rank_info4	db 48 dup(?)
 rank_info5	db 48 dup(?)
+
 
 
 
