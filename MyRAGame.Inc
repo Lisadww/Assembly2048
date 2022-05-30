@@ -56,9 +56,10 @@ gameEnd					PROTO
 initDataBase proto
 saveGame proto :dword, :dword, :dword
 loadGame proto :dword
-getScore proto :dword
+;getScore proto :dword
 createTable proto
 prepareRankInfo proto
+getBestByName proto:dword
 messageBox proto :dword, :dword
 
 
@@ -164,7 +165,10 @@ sz_Text_Result_Reset	DB 'Congratulations For 2048 Generated!',0
 sz_Text_Rank	db	'Ranking List', 0
 sz_Text_NewUser	db	'You have no game history!', 0
 sz_Title_NewUser	db	'Open Error', 0
-
+sz_Text_EmptyName_Open	db	'User name cannot be empty!', 0
+sz_Title_EmptyName_Open	db	'Open Error', 0
+sz_Text_EmptyName_Save	db	'User name cannot be empty!', 0
+sz_Title_EmptyName_Save	db	'Save Error', 0
 
 
 sz_Test					DB '%d',0
@@ -173,8 +177,8 @@ sz_MessageBox_Title		DD 'Me',
 
 sz_Num_to_text			DB '%d',0
 
-text_score				DB 'DF',0
-text_highest_score		DB 'DF',0
+text_score				DD 'DF',0
+text_highest_score		DD 'DF',0
 
 num_score				DD 0
 num_highest_score		DD 0

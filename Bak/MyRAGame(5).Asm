@@ -209,7 +209,7 @@ OnBlockReset proc uses edx ecx hdc:HDC
 	.endw
 	
 	mov num_score, 0
-	mov num_highest_score, 0
+	;mov num_highest_score, 0
 	
 	invoke GetModuleHandle, NULL
     invoke LoadIcon, eax, ICO_BROWN_COLOR_BLOCK
@@ -994,15 +994,29 @@ OnKeydown proc hWin:HWND, message:UINT, wParam:WPARAM, lParam:LPARAM
     mov win_flag, 0
     mov lose_flag, 0
     
+    
     .if flag == 1
+
     	invoke getscore
+    	 mov ecx,num_highest_score
+   		.if num_score > ecx
+   			push num_score
+   			pop num_highest_score
+   		.endif
     	invoke PlaceOneRandBlock
     	
-    	invoke gameEnd
+    	
 
 	
-	; invoke  messageBox,addr szSave,addr szSaveTitle
-    	.if win_flag == 1
+	invoke OnBlockUpdate
+    	invoke OnScoreUpdate, hWin
+    	
+
+    .endif
+    
+    invoke gameEnd
+    Invoke SendMessage,hWin,WM_PAINT,0,0
+    .if win_flag == 1
     		invoke  messageBox,offset sz_Text_Win,offset sz_Text_Highest
 
     		invoke prepareRankInfo
@@ -1014,10 +1028,11 @@ OnKeydown proc hWin:HWND, message:UINT, wParam:WPARAM, lParam:LPARAM
 		invoke DialogBoxParam, hInstance, IDD_RANK, hWin, addr WndRankProc, NULL	
 		invoke SetForegroundWindow, hWin
     	.endif
-    	invoke OnBlockUpdate
-    	invoke OnScoreUpdate, hWin
-    	
-    .endif
+    
+    
+    
+    invoke SetForegroundWindow, hWin
+    
     
 ;    invoke GetWindowDC, hWin
 ;	mov @hdc, eax  
@@ -1164,6 +1179,7 @@ cul_score:
  inc ecx
  cmp ecx,16
  jb cul_score
+ 
  
  ;gameIsWin
  pop edx
@@ -1392,16 +1408,19 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 	local @crText:COLORREF
 	local @dwLen:dword
 	LOCAL @backgroundColor:HBRUSH
+	
+	LOCAL @uMsg:dword
     
     mov eax, uMsg
-    .IF eax == WM_INITDIALOG
+    mov @uMsg, eax
+    .IF @uMsg == WM_INITDIALOG
         push hWin
         pop hWnd
         
         ; Init Stuff Here
         invoke OnBlockReset, @hdc
         
-    .ELSEIF eax == WM_TIMER
+    .ELSEIF @uMsg == WM_TIMER
         mov eax, wParam
         .IF eax == hWin
             Invoke KillTimer, hWin, hWin
@@ -1411,11 +1430,11 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
     ;---------------------------------------------------------------------------------------------------------------
     ; Handle painting of our dialog with our specified background and border color to mimic new Modern style UI feel
     ;---------------------------------------------------------------------------------------------------------------
-    .ELSEIF eax == WM_ERASEBKGND
+    .ELSEIF @uMsg == WM_ERASEBKGND
         mov eax, 1
         ret
 
-    .ELSEIF eax == WM_PAINT
+    .ELSEIF @uMsg == WM_PAINT
         
         ;Draw background
         invoke GetClientRect, hWin, addr @rt
@@ -1448,7 +1467,7 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         ret
     ;---------------------------------------------------------------------------------------------------------------
     
-    .ELSEIF eax == WM_COMMAND
+    .ELSEIF @uMsg == WM_COMMAND
         mov eax, wParam
         and eax, 0FFFFh
         .IF eax == IDM_FILE_EXIT
@@ -1460,6 +1479,9 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         .ELSEIF eax == IDM_NAME
             invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
             invoke SetForegroundWindow, hWin
+           
+
+            Invoke SendMessage,hWin,WM_PAINT,0,0
         
         .ELSEIF eax == IDM_NEW_GAME
             invoke GetWindowDC, hWin
@@ -1470,26 +1492,40 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             Invoke SendMessage,hWin,WM_PAINT,0,0
             
         .ELSEIF eax == IDM_OPEN
-            ;TODO
+            
             
             ;*****************************
             ; update block's show example
             ;*****************************
-            invoke GetWindowDC, hWin
+            
+            ; check name != empty first
+            .if user_name == 0
+            	invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
+            	invoke SetForegroundWindow, hWin
+            	
+            .else
+            
+            	invoke GetWindowDC, hWin
         	mov @hdc, eax  
-            invoke OnBlockReset,@hdc
-            invoke loadGame, offset user_name
+            	invoke OnBlockReset,@hdc
+            	invoke loadGame, offset user_name
+            	.if eax == 1  ; new user
+            		invoke messageBox, offset sz_Text_NewUser, offset sz_Title_NewUser
+            	.else
+            		invoke OnScoreUpdate, hWin
+            		invoke OnBlockUpdate
+            		Invoke SendMessage,hWin,WM_PAINT,0,0
+            	.endif
             
-            ;invoke printf, offset BLOCK
-            
-            invoke OnScoreUpdate, hWin
-            invoke OnBlockUpdate
-            Invoke SendMessage,hWin,WM_PAINT,0,0
+            .endif
             
         .ELSEIF eax == IDM_SAVE
             .if user_name == 0
             	invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
             	invoke SetForegroundWindow, hWin
+            	.if user_name != 0
+            		invoke saveGame, offset BLOCK, offset user_name, offset num_score
+            	.endif
             .else
             	invoke saveGame, offset BLOCK, offset user_name, offset num_score
             .endif
@@ -1509,10 +1545,10 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 		invoke OnKeydown, hWin, eax, wParam, lParam
 		Invoke SendMessage,hWin,WM_PAINT,0,0
 		
-    .ELSEIF eax == WM_CLOSE
+    .ELSEIF @uMsg == WM_CLOSE
         Invoke DestroyWindow,hWin
         
-    .ELSEIF eax == WM_DESTROY
+    .ELSEIF @uMsg == WM_DESTROY
         Invoke PostQuitMessage,NULL
         
     .ELSE
@@ -1538,9 +1574,12 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
 	local @crText:COLORREF
 	local @dwLen:dword
 	LOCAL @backgroundColor:HBRUSH
+	
+	LOCAL @best
     
     mov eax, uMsg
     .IF eax == WM_INITDIALOG
+    	Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
         ;push hWin
         ;pop hWnd
         
@@ -1577,6 +1616,8 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         
         invoke FillRect, @hdc, addr @rt, @backgroundColor
         
+        Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
+        
 		
         invoke EndPaint,hWin,addr @rt
         
@@ -1589,10 +1630,18 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         mov eax, wParam
         and eax, 0FFFFh
         .IF eax == IDC_OK
+            
             Invoke GetDlgItemText,hWin,IDC_NAME,offset user_name,sizeof user_name
             ;Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
             
+            invoke getBestByName,offset user_name
+            mov num_highest_score, eax
+            
+            invoke OnScoreUpdate,hWnd
+            invoke SendMessage,hWnd,WM_PAINT,0,0
             Invoke SendMessage,hWin,WM_CLOSE,0,0 
+            
+            
 
         .ENDIF
 
@@ -1654,7 +1703,6 @@ local @ps:PAINTSTRUCT
 
     .ELSEIF eax == WM_PAINT
     	
-        
         ;Draw background
         invoke GetClientRect, hWin, addr @rt  ; get the coordinate of the window
         
@@ -1712,3 +1760,4 @@ WndRankProc endp
 
 
 end start
+

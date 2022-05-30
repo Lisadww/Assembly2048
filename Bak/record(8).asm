@@ -29,6 +29,7 @@ createTable proto
 updateBestByName proto :dword, :dword
 dword2str proto :dword, :dword
 str2dword proto :dword, :dword
+messageBox proto :dword, :dword
 
 
 extern BLOCK:dword
@@ -46,19 +47,10 @@ public loadGame
 public initDataBase
 public createTable
 public prepareRankInfo
+public messageBox
 
 
-public libName
-public hLib
-public hs_open
-public hs_close
-public hs_exec
-public hs_slct
-public hDB
-public sqlite3_open
-public sqlite3_close
-public sqlite3_exec
-public sqlite3_slct
+
 ;--------------------------------------------------
 ;SQLite相关函数指针定义
 ;--------------------------------------------------
@@ -108,11 +100,13 @@ empty         db       0
 pad	db	5 dup(' '),0
 
 
+szSave	db	'Save successfully!', 0
+szSaveTitle	db	'Save', 0
 
 ;for debug
-states  dword   2,16,0,0,16,0,0,0,2,4,8,16,32,1024,2048,0
-sscore   dword   4096
-sname    db    'Luna', 0
+;states  dword   2,16,0,0,16,0,0,0,2,4,8,16,32,1024,2048,0
+;sscore   dword   4096
+;sname    db    'Luna', 0
 
 ;---------------------
 lq  db  '(', 0
@@ -142,6 +136,16 @@ hs_slct       SQL_Slct ?
 
 
 .code
+
+messageBox proc address_content:dword, address_title:dword
+	
+	invoke MessageBox,NULL, address_content, address_title, MB_OK	
+	
+	ret
+
+messageBox endp
+
+
 ;-------------------------------------------------------------------------------
 ;prepareRankInfo: prepare the rankinfo1-rankinfo5 
 ;-------------------------------------------------------------------------------
@@ -251,9 +255,9 @@ updateBestByName proc address_name:dword, address_score:dword
 	ret
 
 updateBestByName endp
-;------------------------------------------------------------------------
-;getBestByName: return the best score from Players if there is a record with name = NAME in Players. Otherwise return the error code 1.
-;------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------------------------------
+;getBestByName: return the best score and error code from Players. if there is a record with name = NAME in Players, error code = 0. Otherwise return the error code 1.
+;------------------------------------------------------------------------------------------------------------------------
 
 getBestByName      proc    address_name:dword
         local    @result,@nRow,@nCol
@@ -392,6 +396,8 @@ saveGame    proc    address_states:dword, address_name:dword, address_score:dwor
             
             invoke   hs_open,offset fileName,offset hDB
             
+            
+            
             invoke  RtlZeroMemory, offset sql, sizeof sql
             invoke strcat, offset sql, offset sql_deleteByName  ; delete first. TODO: more save_file?
 
@@ -447,6 +453,8 @@ writeStates:
 
 
             invoke updateBestByName, address_name, address_score
+            
+            invoke  MessageBox,NULL,offset szSave,offset szSaveTitle,MB_OK
 
             ret
 saveGame    endp
@@ -454,12 +462,22 @@ saveGame    endp
 ;-------------------------------------------------------------------------------------------------------------
 ;loadGame[param1:the address(dword) of name(byte) return 0 when no error occurs.]
 ;set the value of BLOCK, num_score
+;return 0 if loadGame ok.
 ;-------------------------------------------------------------------------------------------------------------
 loadGame proc address_name:dword
-	;LOCAL    @str:byte
 	local    @result,@nRow,@nCol
               local    @i,@j,@index
               LOCAL	@iBlock:dword
+              LOCAL @error:dword
+              
+              invoke  RtlZeroMemory, offset num_highest_score, sizeof num_highest_score
+              invoke  RtlZeroMemory, offset num_score, sizeof num_score
+              
+              
+              ; first set num_best_score
+              invoke getBestByName, address_name
+              mov num_highest_score, eax
+              mov @error, ebx
               
               invoke  RtlZeroMemory, offset sql, sizeof sql
             invoke strcat, offset sql, offset sql_selectByName
@@ -511,11 +529,8 @@ loadGame proc address_name:dword
                                 add ecx, eax
                                 pop eax
                               	invoke str2dword, offset szStr, ecx
-                              	;invoke  MessageBox,NULL,offset szStr,offset fileName,MB_OK
                               	
                               .endif
-                              ;invoke  strcat,offset szStr,[ebx + edi*4]
-                              ;invoke  strcat,offset szStr,offset endline
 
                               inc     esi
                               inc     edi
@@ -526,8 +541,7 @@ loadGame proc address_name:dword
                       mov    @i,eax
                       .break  ; TODO: can we get more save_file?
               .endw
-              ;invoke  MessageBox,NULL,offset szStr1,offset fileName,MB_OK
-              ;invoke  RtlZeroMemory, offset szStr1, sizeof szStr1
+              mov eax, @error
 	
 	
 	ret

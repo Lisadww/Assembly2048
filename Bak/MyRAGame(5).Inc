@@ -52,12 +52,15 @@ getscore                PROTO
 IsMerge					PROTO
 gameEnd					PROTO
 
+;TS
 initDataBase proto
 saveGame proto :dword, :dword, :dword
 loadGame proto :dword
 getScore proto :dword
 createTable proto
 prepareRankInfo proto
+messageBox proto :dword, :dword
+
 
 public BLOCK
 public num_score
@@ -146,7 +149,7 @@ GAME_BOX_WIDTH        EQU 85
 ;-----------------------------------------------------------------------------------------
 
 
-;TS
+
 dbname      db       'data.db',0  
 ClassName               DB 'DLGCLASS',0
 AppName                 DB 'MyRAGame',0
@@ -157,8 +160,11 @@ sz_Text_Score			DB 'Score',0
 sz_Text_Highest			DB 'Highest',0
 sz_Text_Win				DB 'Congratulations For 2048 Generated!',0
 sz_Text_Lose			DB 'You have lost... Try to start again.',0
-sz_Text_Result_Reset	DB 'CongratulationssFors2048sGenerated!s',0
+sz_Text_Result_Reset	DB 'Congratulations For 2048 Generated!',0
 sz_Text_Rank	db	'Ranking List', 0
+sz_Text_NewUser	db	'You have no game history!', 0
+sz_Title_NewUser	db	'Open Error', 0
+
 
 
 sz_Test					DB '%d',0

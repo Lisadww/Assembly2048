@@ -29,6 +29,7 @@ createTable proto
 updateBestByName proto :dword, :dword
 dword2str proto :dword, :dword
 str2dword proto :dword, :dword
+messageBox proto :dword, :dword
 
 
 extern BLOCK:dword
@@ -46,6 +47,8 @@ public loadGame
 public initDataBase
 public createTable
 public prepareRankInfo
+public getBestByName
+public messageBox
 
 
 
@@ -134,6 +137,16 @@ hs_slct       SQL_Slct ?
 
 
 .code
+
+messageBox proc address_content:dword, address_title:dword
+	
+	invoke MessageBox,NULL, address_content, address_title, MB_OK	
+	
+	ret
+
+messageBox endp
+
+
 ;-------------------------------------------------------------------------------
 ;prepareRankInfo: prepare the rankinfo1-rankinfo5 
 ;-------------------------------------------------------------------------------
@@ -252,6 +265,9 @@ getBestByName      proc    address_name:dword
         local    @i,@j,@index
         LOCAL	@best:dword
         local @flag:dword
+        ; 5 30
+        invoke   hs_open,offset fileName,offset hDB
+        
         mov @best, 0  
         mov @flag, 0
         invoke  RtlZeroMemory, offset sql, sizeof sql
@@ -262,6 +278,7 @@ getBestByName      proc    address_name:dword
         invoke strcat, offset sql, offset sy
 
         mov eax, offset sql
+        ;invoke  MessageBox,NULL,offset sql,offset fileName,MB_OK
         invoke   hs_slct,hDB,offset sql,addr @result,addr @nRow,\
                        addr @nCol,offset errorInfo
         invoke  RtlZeroMemory, offset szStr, sizeof szStr
@@ -290,6 +307,7 @@ getBestByName      proc    address_name:dword
         mov eax, @best
         .if @flag == 1
         	mov ebx, 0
+        	
         .else
                 mov ebx, 1
         .endif
@@ -450,17 +468,22 @@ saveGame    endp
 ;-------------------------------------------------------------------------------------------------------------
 ;loadGame[param1:the address(dword) of name(byte) return 0 when no error occurs.]
 ;set the value of BLOCK, num_score
+;return 0 if loadGame ok.
 ;-------------------------------------------------------------------------------------------------------------
 loadGame proc address_name:dword
-	;LOCAL    @str:byte
 	local    @result,@nRow,@nCol
               local    @i,@j,@index
               LOCAL	@iBlock:dword
+              LOCAL @error:dword
+              
+              invoke  RtlZeroMemory, offset num_highest_score, sizeof num_highest_score
+              invoke  RtlZeroMemory, offset num_score, sizeof num_score
               
               
               ; first set num_best_score
               invoke getBestByName, address_name
               mov num_highest_score, eax
+              mov @error, ebx
               
               invoke  RtlZeroMemory, offset sql, sizeof sql
             invoke strcat, offset sql, offset sql_selectByName
@@ -512,11 +535,8 @@ loadGame proc address_name:dword
                                 add ecx, eax
                                 pop eax
                               	invoke str2dword, offset szStr, ecx
-                              	;invoke  MessageBox,NULL,offset szStr,offset fileName,MB_OK
                               	
                               .endif
-                              ;invoke  strcat,offset szStr,[ebx + edi*4]
-                              ;invoke  strcat,offset szStr,offset endline
 
                               inc     esi
                               inc     edi
@@ -527,8 +547,7 @@ loadGame proc address_name:dword
                       mov    @i,eax
                       .break  ; TODO: can we get more save_file?
               .endw
-              ;invoke  MessageBox,NULL,offset szStr1,offset fileName,MB_OK
-              ;invoke  RtlZeroMemory, offset szStr1, sizeof szStr1
+              mov eax, @error
 	
 	
 	ret

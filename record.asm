@@ -47,6 +47,7 @@ public loadGame
 public initDataBase
 public createTable
 public prepareRankInfo
+public getBestByName
 public messageBox
 
 
@@ -151,8 +152,7 @@ messageBox endp
 ;-------------------------------------------------------------------------------
 prepareRankInfo proc
 
-
-local    @result,@nRow,@nCol
+		local    @result,@nRow,@nCol
               	local    @i,@j,@index
 		invoke   hs_open,offset fileName,offset hDB
               	invoke   hs_slct,hDB,offset sql_selectRank,addr @result,addr @nRow,\
@@ -174,7 +174,7 @@ local    @result,@nRow,@nCol
                               	inc     esi
                               	inc     edi
                       	.endw
-                      	;invoke  MessageBox,NULL,offset szStr,offset fileName,MB_OK
+
                       	.if @i == 1
                       		invoke strcpy, offset rank_info1, offset szStr
                       	.elseif @i == 2
@@ -264,6 +264,9 @@ getBestByName      proc    address_name:dword
         local    @i,@j,@index
         LOCAL	@best:dword
         local @flag:dword
+        ; 5 30
+        invoke   hs_open,offset fileName,offset hDB
+        
         mov @best, 0  
         mov @flag, 0
         invoke  RtlZeroMemory, offset sql, sizeof sql
@@ -274,10 +277,11 @@ getBestByName      proc    address_name:dword
         invoke strcat, offset sql, offset sy
 
         mov eax, offset sql
+
         invoke   hs_slct,hDB,offset sql,addr @result,addr @nRow,\
                        addr @nCol,offset errorInfo
         invoke  RtlZeroMemory, offset szStr, sizeof szStr
-        ;mov      @str,eax
+
         mov      edi,@nCol
         mov      eax,@nRow
         mov      @i,eax
@@ -296,12 +300,13 @@ getBestByName      proc    address_name:dword
                 dec    eax
                 mov    @i,eax
         .endw
-        ;invoke  MessageBox,NULL,offset szStr,offset fileName,MB_OK
+
         invoke  RtlZeroMemory, offset szStr, sizeof szStr
         
         mov eax, @best
         .if @flag == 1
         	mov ebx, 0
+        	
         .else
                 mov ebx, 1
         .endif
@@ -427,7 +432,6 @@ writeStates:
             invoke  RtlZeroMemory, offset str0, sizeof str0
             invoke dword2str, ebx, offset str0
             
-            ;mov esi, offset sql
             ;invoke strcat, offset sql, offset sy
             invoke strcat, offset sql, offset str0
             ;invoke strcat, offset sql, offset sy
@@ -437,7 +441,6 @@ writeStates:
             inc @i
             ;loop writeStates
 .endw
-            ;mov esi, offset sql
             invoke  RtlZeroMemory, offset str0, sizeof str0
             invoke dword2str, address_score, offset str0
 
