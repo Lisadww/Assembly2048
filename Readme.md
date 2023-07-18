@@ -1,3 +1,6 @@
+## 效果圖
+![image](https://github.com/Lisadww/Assembly2048/assets/84257080/863f2a30-0714-4982-9739-1139486a4769)
+
 ## 环境：
 
 * 系统：windows系统，
