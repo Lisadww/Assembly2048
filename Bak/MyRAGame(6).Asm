@@ -1641,10 +1641,7 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             invoke SendMessage,hWnd,WM_PAINT,0,0
             Invoke SendMessage,hWin,WM_CLOSE,0,0 
             
-            .if user_name == 0
-            	invoke messageBox,offset sz_Text_EmptyName, offset sz_Title_EmptyName
-            	
-            .endif
+            
 
         .ENDIF
 

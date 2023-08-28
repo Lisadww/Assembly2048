@@ -528,7 +528,7 @@ OnDraw proc uses edx ecx hWin:HWND, hdc:HDC
 	mov ebx, block_width
     .if x2 > ebx
     	;draw the icon of 2048
-		invoke DrawIconEx,hdc,x1,y1,hIconLogo2048 ,block_width ,block_width ,0, NULL, DI_NORMAL
+	;invoke DrawIconEx,hdc,x1,y1,hIconLogo2048 ,block_width ,block_width ,0, NULL, DI_NORMAL
     .endif
     
     
@@ -1487,6 +1487,8 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             invoke GetWindowDC, hWin
         	mov @hdc, eax  
             invoke OnBlockInit
+            invoke getBestByName,offset user_name
+            mov num_highest_score, eax
             invoke OnScoreUpdate, hWin
             
             Invoke SendMessage,hWin,WM_PAINT,0,0

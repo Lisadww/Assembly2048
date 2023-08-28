@@ -1505,15 +1505,18 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             	.if user_name != 0
             		invoke GetWindowDC, hWin
         		mov @hdc, eax  
-            		invoke OnBlockReset,@hdc
-            		invoke loadGame, offset user_name
-            		.if eax == 1  ; new user
-            			invoke messageBox, offset sz_Text_NewUser, offset sz_Title_NewUser
-            		.else
-            			
+        		invoke getBestByName, offset user_name
+        		.if ebx == 0
+        			invoke OnBlockReset,@hdc
+            			invoke loadGame, offset user_name
             			invoke OnScoreUpdate, hWin
             			invoke OnBlockUpdate
             			Invoke SendMessage,hWin,WM_PAINT,0,0
+        		.else
+            			invoke messageBox, offset sz_Text_NewUser, offset sz_Title_NewUser
+            		
+            			
+            			
             		.endif
             	.else
             		invoke messageBox, offset sz_Text_EmptyName_Open, offset sz_Title_EmptyName_Open
@@ -1521,16 +1524,20 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             .else
             
             	invoke GetWindowDC, hWin
-        	mov @hdc, eax  
-            	invoke OnBlockReset,@hdc
-            	invoke loadGame, offset user_name
-            	.if eax == 1  ; new user
-            		invoke messageBox, offset sz_Text_NewUser, offset sz_Title_NewUser
-            	.else
-            		invoke OnScoreUpdate, hWin
-            		invoke OnBlockUpdate
-            		Invoke SendMessage,hWin,WM_PAINT,0,0
-            	.endif
+        		mov @hdc, eax  
+        		invoke getBestByName, offset user_name
+        		.if ebx == 0
+        			invoke OnBlockReset,@hdc
+            			invoke loadGame, offset user_name
+            			invoke OnScoreUpdate, hWin
+            			invoke OnBlockUpdate
+            			Invoke SendMessage,hWin,WM_PAINT,0,0
+        		.else
+            			invoke messageBox, offset sz_Text_NewUser, offset sz_Title_NewUser
+            		
+            			
+            			
+            		.endif
             
             .endif
             

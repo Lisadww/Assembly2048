@@ -1630,10 +1630,7 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         mov eax, wParam
         and eax, 0FFFFh
         .IF eax == IDC_OK
-            .if user_name == 0
-            	invoke messageBox,offset sz_Text_EmptyName, offset sz_Title_EmptyName
-            	Invoke SendMessage,hWin,WM_CLOSE,0,0 
-            .endif
+            
             Invoke GetDlgItemText,hWin,IDC_NAME,offset user_name,sizeof user_name
             ;Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
             
@@ -1643,6 +1640,11 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             invoke OnScoreUpdate,hWnd
             invoke SendMessage,hWnd,WM_PAINT,0,0
             Invoke SendMessage,hWin,WM_CLOSE,0,0 
+            
+            .if user_name == 0
+            	invoke messageBox,offset sz_Text_EmptyName, offset sz_Title_EmptyName
+            	
+            .endif
 
         .ENDIF
 

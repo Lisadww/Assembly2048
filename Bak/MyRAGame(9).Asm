@@ -1523,6 +1523,9 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             .if user_name == 0
             	invoke DialogBoxParam, hInstance, IDD_GET_USER_NAME, hWnd, addr WndUserNameProc, NULL
             	invoke SetForegroundWindow, hWin
+            	.if user_name != 0
+            		invoke saveGame, offset BLOCK, offset user_name, offset num_score
+            	.endif
             .else
             	invoke saveGame, offset BLOCK, offset user_name, offset num_score
             .endif
@@ -1627,6 +1630,9 @@ WndUserNameProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
         mov eax, wParam
         and eax, 0FFFFh
         .IF eax == IDC_OK
+            .if user_name == 0
+            	invoke messageBox,offset sz_Text_EmptyName, offset sz_Title_EmptyName
+            .endif
             Invoke GetDlgItemText,hWin,IDC_NAME,offset user_name,sizeof user_name
             ;Invoke SetDlgItemText,hWin,IDC_NAME,offset user_name
             
@@ -1697,7 +1703,6 @@ local @ps:PAINTSTRUCT
 
     .ELSEIF eax == WM_PAINT
     	
-        
         ;Draw background
         invoke GetClientRect, hWin, addr @rt  ; get the coordinate of the window
         
@@ -1755,3 +1760,4 @@ WndRankProc endp
 
 
 end start
+

@@ -1525,6 +1525,8 @@ WndProc proc hWin:HWND,uMsg:UINT,wParam:WPARAM,lParam:LPARAM
             	invoke SetForegroundWindow, hWin
             	.if user_name != 0
             		invoke saveGame, offset BLOCK, offset user_name, offset num_score
+            	.else
+            		invoke messageBox, offset sz_Text_EmptyName, offset sz_Title_EmptyName
             	.endif
             .else
             	invoke saveGame, offset BLOCK, offset user_name, offset num_score
